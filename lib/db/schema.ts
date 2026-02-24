@@ -1,0 +1,27 @@
+import { pgTable, uuid, varchar, text, integer, jsonb, timestamp } from "drizzle-orm/pg-core";
+import { InferSelectModel, InferInsertModel } from "drizzle-orm";
+
+export const analyses = pgTable("analyses", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  viatorProductCode: varchar("viator_product_code", { length: 20 }).notNull(),
+  productTitle: text("product_title"),
+  status: varchar("status", { length: 20 }).default("pending").notNull(),
+  overallScore: integer("overall_score"),
+  scores: jsonb("scores").$type<{
+    title: number;
+    description: number;
+    pricing: number;
+    reviews: number;
+    photos: number;
+    completeness: number;
+  }>(),
+  productData: jsonb("product_data"),
+  competitorsData: jsonb("competitors_data"),
+  recommendations: jsonb("recommendations"),
+  reviewInsights: jsonb("review_insights"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
+export type Analysis = InferSelectModel<typeof analyses>;
+export type NewAnalysis = InferInsertModel<typeof analyses>;
