@@ -174,8 +174,8 @@ export default function ReportPage({
               title: analysis.productTitle || "",
               rating: productData?.reviews?.combinedAverageRating || 0,
               reviewCount: productData?.reviews?.totalReviews || 0,
-              price: productData?.pricing?.price || 0,
-              currency: productData?.pricing?.currency || "",
+              price: productData?.pricing?.summary?.fromPrice || productData?.pricing?.price || 0,
+              currency: productData?.pricing?.currency || "USD",
               photoCount: productData?.images?.length || 0,
             }}
             competitors={competitorsData || []}

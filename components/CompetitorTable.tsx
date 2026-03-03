@@ -73,8 +73,8 @@ export default function CompetitorTable({
               transition={{ duration: 0.4 }}
               className="border-b border-white/10 bg-primary/10"
             >
-              <td className="py-4 px-3 text-white font-semibold max-w-xs truncate">
-                YOUR TOUR
+              <td className="py-4 px-3 text-white font-semibold max-w-xs truncate" title={operatorData.title}>
+                {operatorData.title}
               </td>
               <td
                 className={`text-right py-4 px-3 ${cellClass(
@@ -120,8 +120,8 @@ export default function CompetitorTable({
                 transition={{ duration: 0.4, delay: (index + 1) * 0.1 }}
                 className="border-b border-white/10 hover:bg-white/5"
               >
-                <td className="py-4 px-3 text-gray-300 max-w-xs truncate">
-                  Competitor #{index + 1}
+                <td className="py-4 px-3 text-gray-300 max-w-xs truncate" title={competitor.title}>
+                  {competitor.title}
                 </td>
                 <td className="text-right py-4 px-3 text-gray-300">
                   {competitor.rating.toFixed(1)}

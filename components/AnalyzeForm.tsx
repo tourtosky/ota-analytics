@@ -11,13 +11,13 @@ export default function AnalyzeForm() {
   const router = useRouter();
 
   const extractProductCode = (input: string): string | null => {
-    // Viator URLs look like: https://www.viator.com/tours/City-Name/Tour-Title/d123-45678P9
-    // Extract the product code (e.g., 45678P9)
-    const urlMatch = input.match(/\/d\d+-(\d+P\d+)/);
+    // Viator URLs look like: https://www.viator.com/tours/City-Name/Tour-Title/d123-PRODUCTCODE
+    // Product codes vary in format: 45678P9, 2484IGUHELI, 12345ABC, etc.
+    const urlMatch = input.match(/\/d\d+-([A-Za-z0-9]+)/);
     if (urlMatch) return urlMatch[1];
 
-    // Check if it's already a product code (e.g., 45678P9)
-    const codeMatch = input.match(/^(\d+P\d+)$/);
+    // Check if it's already a product code (alphanumeric, 4+ chars)
+    const codeMatch = input.match(/^([A-Za-z0-9]{4,})$/);
     if (codeMatch) return codeMatch[1];
 
     return null;

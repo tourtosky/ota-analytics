@@ -72,7 +72,7 @@ Return ONLY the JSON array, no other text.`;
   const userMessage = `## Operator's Product
 Title: ${product.title}
 Rating: ${product.reviews?.combinedAverageRating || "N/A"} (${product.reviews?.totalReviews || 0} reviews)
-Price: ${product.pricing?.currency || "USD"}${product.pricing?.price || product.pricing?.summary?.fromPrice || "N/A"}
+Price: ${product.pricing?.currency || "USD"}${product.pricing?.summary?.fromPrice || product.pricing?.price || "N/A"}
 Photos: ${product.images?.length || 0}
 Description length: ${product.description ? product.description.split(/\s+/).length : 0} words
 Inclusions: ${product.inclusions?.length || 0} items

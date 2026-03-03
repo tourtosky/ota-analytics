@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { analyses } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { fetchProduct, searchCompetitors, formatCompetitorData } from "@/lib/viator/products";
+import { fetchProduct, searchCompetitors, formatCompetitorData, getSearchResultPrice, fetchProductPrice } from "@/lib/viator/products";
 import { fetchReviews } from "@/lib/viator/reviews";
 import { calculateScores } from "@/lib/analysis/scoring";
 import { generateRecommendations, generateReviewInsights } from "@/lib/analysis/recommendations";
@@ -82,8 +82,8 @@ async function processAnalysis(analysisId: string, productCode: string) {
 
     console.log(`Using destination: ${primaryDestination}, tag: ${primaryTagRef}`);
 
-    // 2. Find competitors
-    const competitorResults = await searchCompetitors(
+    // 2. Find competitors (also returns operator's search result for pricing)
+    const { competitors: competitorResults, operatorSearchResult } = await searchCompetitors(
       primaryDestination,
       primaryTagRef,
       productCode,
@@ -91,11 +91,28 @@ async function processAnalysis(analysisId: string, productCode: string) {
     );
 
     console.log(`Found ${competitorResults.length} competitor products`);
-    if (competitorResults.length > 0) {
-      console.log('Sample competitor:', JSON.stringify(competitorResults[0], null, 2));
+
+    // Enrich operator product with pricing
+    // (full product endpoint doesn't include fromPrice)
+    if (operatorSearchResult) {
+      const operatorPrice = getSearchResultPrice(operatorSearchResult);
+      product.pricing = {
+        ...product.pricing,
+        summary: { fromPrice: operatorPrice.price },
+        currency: operatorPrice.currency,
+      };
+    } else {
+      // Product not in search results - fetch price via availability check
+      console.log("Operator not in search results, fetching price via availability check");
+      const operatorPrice = await fetchProductPrice(productCode);
+      product.pricing = {
+        ...product.pricing,
+        summary: { fromPrice: operatorPrice.price },
+        currency: operatorPrice.currency,
+      };
     }
 
-    const competitors = formatCompetitorData(competitorResults);
+    const competitors = await formatCompetitorData(competitorResults);
     console.log(`Formatted ${competitors.length} competitors with complete data`);
 
     // 3. Fetch reviews (operator + top 3 competitors)

@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -X POST http://localhost:3000/api/analyze -H \"Content-Type: application/json\" -d '{\"\"productCode\"\":\"\"2484IGUHELI\"\"}')",
+      "Bash(curl -s http://localhost:3000/api/report/e096c72e-994b-4b09-b772-fd99c64d0fb9)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(''status:'', d.get\\(''status''\\)\\)\")",
+      "Bash(python3 -c \":*)",
+      "Bash(node -e \":*)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(curl -s http://localhost:300)",
+      "Bash(curl -s http://localhost:3000/api/report/fae4de28-fff8-4e93-a19a-eaeeeb39c9db)",
+      "Bash(curl -s http://localhost:3000/api/report/95b99398-805a-4ded-a570-718f32400ff3)"
+    ]
+  }
+}

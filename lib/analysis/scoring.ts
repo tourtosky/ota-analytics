@@ -151,7 +151,7 @@ function scorePricing(
     return 50; // No competitor data, neutral score
   }
 
-  const price = product.pricing.price;
+  const price = product.pricing?.summary?.fromPrice || product.pricing?.price || 0;
   const median = competitorStats.medianPrice;
   const percentDiff = ((price - median) / median) * 100;
 

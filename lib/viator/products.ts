@@ -14,25 +14,46 @@ export async function fetchProduct(productCode: string): Promise<ViatorProduct> 
 }
 
 /**
- * Search for competitor products in the same destination and category
+ * Fetch multiple products in bulk (up to 500 at once)
+ * Returns full product details including all images
+ */
+export async function fetchProductsBulk(
+  productCodes: string[]
+): Promise<ViatorProduct[]> {
+  if (productCodes.length === 0) return [];
+
+  // Bulk endpoint returns an array directly, not { products: [...] }
+  const response = await viatorRequest<ViatorProduct[]>(
+    "/products/bulk",
+    {
+      method: "POST",
+      body: { productCodes },
+    }
+  );
+
+  return Array.isArray(response) ? response : [];
+}
+
+/**
+ * Search for competitor products in the same destination and category.
+ * Also returns the operator's own search result (for pricing data).
  */
 export async function searchCompetitors(
   destinationId: string,
   tagId: string,
   excludeProductCode: string,
   limit: number = 10
-): Promise<ViatorProductSearchResult[]> {
+): Promise<{ competitors: ViatorProductSearchResult[]; operatorSearchResult?: ViatorProductSearchResult }> {
   const searchBody = {
     filtering: {
       destination: destinationId,
       tags: [tagId],
     },
-    currency: "USD", // Required by Viator API
+    currency: "USD",
     pagination: {
       offset: 0,
-      limit: limit + 5, // Get extra in case some need to be filtered out
+      limit: limit + 5,
     },
-    // Note: Sorting is optional - Viator will return results in default order
   };
 
   const response = await viatorRequest<ViatorProductSearchResponse>(
@@ -43,33 +64,122 @@ export async function searchCompetitors(
     }
   );
 
-  // Filter out the operator's own product and limit results
-  return response.products
+  const operatorSearchResult = response.products.find(
+    (product) => product.productCode === excludeProductCode
+  );
+
+  const competitors = response.products
     .filter((product) => product.productCode !== excludeProductCode)
     .slice(0, limit);
+
+  return { competitors, operatorSearchResult };
 }
 
 /**
- * Convert search results to simplified competitor data
+ * Convert search results to simplified competitor data.
+ * Enriches with full product details (photo counts) via bulk API.
  */
-export function formatCompetitorData(
+export async function formatCompetitorData(
   products: ViatorProductSearchResult[]
-): CompetitorData[] {
-  return products
-    .filter((product) => {
-      // Filter out products with missing critical data
-      return product.reviews && product.pricing && product.images;
-    })
+): Promise<CompetitorData[]> {
+  // Get basic data from search results (has price, but only 1 cover image)
+  const basicData = products
+    .filter((product) => product.reviews && product.pricing)
     .map((product) => ({
       productCode: product.productCode,
       title: product.title || "Untitled",
       rating: product.reviews?.combinedAverageRating || 0,
       reviewCount: product.reviews?.totalReviews || 0,
-      price: product.pricing?.price || 0,
+      price: product.pricing?.summary?.fromPrice || 0,
       currency: product.pricing?.currency || "USD",
-      photoCount: product.images?.length || 0,
+      photoCount: 0, // Will be enriched from bulk fetch
       flags: product.flags || [],
     }));
+
+  // Fetch full product details to get real photo counts
+  const productCodes = basicData.map((d) => d.productCode);
+  try {
+    const fullProducts = await fetchProductsBulk(productCodes);
+    const photoCountMap = new Map<string, number>();
+    for (const fp of fullProducts) {
+      photoCountMap.set(fp.productCode, fp.images?.length || 0);
+    }
+
+    for (const item of basicData) {
+      item.photoCount = photoCountMap.get(item.productCode) || 0;
+    }
+  } catch (error) {
+    console.error("Failed to fetch bulk product details for photo counts:", error);
+    // Continue with photoCount = 0 rather than failing
+  }
+
+  return basicData;
+}
+
+/**
+ * Extract price from a search result
+ */
+export function getSearchResultPrice(
+  searchResult: ViatorProductSearchResult
+): { price: number; currency: string } {
+  return {
+    price: searchResult.pricing?.summary?.fromPrice || 0,
+    currency: searchResult.pricing?.currency || "USD",
+  };
+}
+
+/**
+ * Fetch the per-person price for a product via availability check.
+ * Used when the product doesn't appear in search results.
+ */
+export async function fetchProductPrice(
+  productCode: string,
+  currency: string = "USD"
+): Promise<{ price: number; currency: string }> {
+  // Check availability for a date 7 days out with 2 adults
+  const travelDate = new Date(Date.now() + 7 * 86400000)
+    .toISOString()
+    .split("T")[0];
+
+  try {
+    const response = await viatorRequest<{
+      currency: string;
+      bookableItems: Array<{
+        lineItems: Array<{
+          ageBand: string;
+          numberOfTravelers: number;
+          subtotalPrice: {
+            price: {
+              recommendedRetailPrice: number;
+              partnerNetPrice: number;
+            };
+          };
+        }>;
+      }>;
+    }>("/availability/check", {
+      method: "POST",
+      body: {
+        productCode,
+        travelDate,
+        currency,
+        paxMix: [{ ageBand: "ADULT", numberOfTravelers: 2 }],
+      },
+    });
+
+    // Get per-person price from first bookable item
+    const firstItem = response.bookableItems?.[0];
+    const lineItem = firstItem?.lineItems?.[0];
+    if (lineItem) {
+      const totalPrice =
+        lineItem.subtotalPrice?.price?.recommendedRetailPrice || 0;
+      const perPerson = totalPrice / lineItem.numberOfTravelers;
+      return { price: Math.round(perPerson * 100) / 100, currency };
+    }
+  } catch (error) {
+    console.error("Failed to fetch product price via availability:", error);
+  }
+
+  return { price: 0, currency };
 }
 
 /**

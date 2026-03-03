@@ -26,10 +26,27 @@ export interface ViatorReviewSummary {
   combinedAverageRating: number;
 }
 
+// Full product endpoint has pricingInfo (no price), search endpoint has pricing with summary
 export interface ViatorPricing {
   currency: string;
-  price: number;
+  summary?: {
+    fromPrice: number;
+    fromPriceBeforeDiscount?: number;
+  };
+  // Legacy/convenience fields (not from API, populated by our code)
+  price?: number;
   originalPrice?: number;
+}
+
+export interface ViatorPricingInfo {
+  type: string;
+  ageBands: Array<{
+    ageBand: string;
+    startAge: number;
+    endAge: number;
+    minTravelersPerBooking: number;
+    maxTravelersPerBooking: number;
+  }>;
 }
 
 export interface ViatorItineraryItem {
@@ -56,6 +73,9 @@ export interface ViatorProduct {
   duration?: {
     fixedDurationInMinutes?: number;
   };
+  // Full product endpoint returns pricingInfo (age bands only, no price)
+  pricingInfo?: ViatorPricingInfo;
+  // We populate this from the search API result
   pricing: ViatorPricing;
   reviews: ViatorReviewSummary;
   itinerary?: {
@@ -77,8 +97,9 @@ export interface ViatorProduct {
 export interface ViatorProductSearchResult {
   productCode: string;
   title: string;
-  images: ViatorImage[];
-  pricing: ViatorPricing;
+  description?: string;
+  images: ViatorImage[]; // Search returns only 1 cover image
+  pricing: ViatorPricing; // Has pricing.summary.fromPrice
   reviews: ViatorReviewSummary;
   flags?: string[];
   destinations: ViatorDestination[];
