@@ -25,3 +25,14 @@ export const analyses = pgTable("analyses", {
 
 export type Analysis = InferSelectModel<typeof analyses>;
 export type NewAnalysis = InferInsertModel<typeof analyses>;
+
+export const scrapedPages = pgTable("scraped_pages", {
+  url: text("url").primaryKey(),
+  platform: varchar("platform", { length: 20 }).notNull(),
+  html: text("html"),
+  // NOTE: parsedData omits .$type<ScrapedListing>() to avoid a dependency cycle.
+  // lib/scraping/utils/cache.ts casts to ScrapedListing on read.
+  parsedData: jsonb("parsed_data").notNull(),
+  scrapedAt: timestamp("scraped_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+});
