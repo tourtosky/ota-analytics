@@ -14,7 +14,7 @@ import { logAdminEvent } from "@/lib/admin/events";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { productCode } = body;
+    const { productCode, sourceUrl } = body;
 
     if (!productCode) {
       return NextResponse.json(
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Start processing asynchronously (don't await)
-    processAnalysis(analysis.id, productCode).catch(async (error) => {
+    processAnalysis(analysis.id, productCode, sourceUrl).catch(async (error) => {
       console.error("Error processing analysis:", error);
       // Update status to failed
       await db.update(analyses)
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 /**
  * Process the analysis asynchronously
  */
-async function processAnalysis(analysisId: string, productCode: string) {
+async function processAnalysis(analysisId: string, productCode: string, sourceUrl?: string) {
   try {
     const pipelineStart = Date.now();
 
@@ -135,11 +135,11 @@ async function processAnalysis(analysisId: string, productCode: string) {
     console.log(`Formatted ${competitors.length} competitors with complete data`);
 
     // 2b. Scrape operator page for full content
-    console.log(`Scraping operator page: ${productCode}`);
-    const operatorUrl = buildViatorUrl(
-      product.destinations[0]?.ref ?? "",
-      productCode
-    );
+    // Prefer the original URL the user submitted (has correct slugs for Viator)
+    const operatorUrl = (sourceUrl && sourceUrl.includes("viator.com"))
+      ? sourceUrl
+      : buildViatorUrl(product.destinations[0]?.ref ?? "", productCode);
+    console.log(`Scraping operator page: ${operatorUrl}`);
     const operatorScraper = getScraperForUrl(operatorUrl);
     const operatorScrapeResult = await operatorScraper
       .scrape(operatorUrl)
@@ -149,23 +149,8 @@ async function processAnalysis(analysisId: string, productCode: string) {
       });
     const operatorScrape = operatorScrapeResult.listing;
 
-    // Scrape top 3 competitors sequentially (best-effort)
-    // Skip if operator was blocked by DataDome — same IP will get blocked for all
-    const botBlocked = operatorScrapeResult.error?.includes("DataDome");
-    if (botBlocked) {
-      console.log("Skipping competitor scrapes — bot protection active");
-    } else {
-      for (const competitor of competitors.slice(0, 3)) {
-        if (!competitor.destinationRef) continue;
-        const compUrl = buildViatorUrl(competitor.destinationRef, competitor.productCode);
-        const compScraper = getScraperForUrl(compUrl);
-        await compScraper.scrape(compUrl).catch((err) => {
-          console.warn(`Competitor scrape failed for ${competitor.productCode}:`, err);
-        });
-        // Note: competitor scrape data is stored in cache for future use,
-        // but not used in scoring in this iteration.
-      }
-    }
+    // Competitor scraping disabled — not used in scoring and costs ZenRows credits
+    // Competitor data comes from Viator API search results instead
 
     // Merge API + scrape data
     const mergedProduct = mergeProductData(product, operatorScrape);
@@ -187,6 +172,16 @@ async function processAnalysis(analysisId: string, productCode: string) {
 
     // 4. Calculate scores
     const scores = calculateScores(mergedProduct, competitors);
+
+    // Guard against NaN scores (can happen with missing competitor data)
+    const safeScore = (v: number) => (Number.isFinite(v) ? v : 0);
+    scores.title = safeScore(scores.title);
+    scores.description = safeScore(scores.description);
+    scores.pricing = safeScore(scores.pricing);
+    scores.reviews = safeScore(scores.reviews);
+    scores.photos = safeScore(scores.photos);
+    scores.completeness = safeScore(scores.completeness);
+    scores.overall = safeScore(scores.overall);
 
     // 5. Generate AI recommendations (parallel)
     const [recommendations, reviewInsights] = await Promise.all([

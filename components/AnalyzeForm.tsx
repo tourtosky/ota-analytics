@@ -41,7 +41,7 @@ export default function AnalyzeForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ productCode }),
+        body: JSON.stringify({ productCode, sourceUrl: url.trim() }),
       });
 
       const data = await response.json();

@@ -1,52 +1,38 @@
-import { chromium, type Browser } from "playwright";
-
-let browserInstance: Browser | null = null;
-let scrapeCount = 0;
-let lastRestartAt = Date.now();
-
-const MAX_SCRAPES_BEFORE_RESTART = 50;
-const RESTART_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
-
 /**
- * Get the shared browser instance, launching or restarting as needed.
- *
- * Concurrency note: Playwright Browser supports multiple concurrent pages safely.
- * Counter drift under concurrent requests is an accepted MVP limitation.
+ * Fetch a page's HTML via ZenRows API directly (no SDK — avoids hanging issues).
  */
-export async function getBrowser(): Promise<Browser> {
-  const elapsed = Date.now() - lastRestartAt;
-  const needsRestart =
-    (browserInstance !== null && scrapeCount >= MAX_SCRAPES_BEFORE_RESTART) ||
-    (browserInstance !== null && elapsed >= RESTART_INTERVAL_MS);
-
-  if (needsRestart) {
-    await closeBrowser();
+export async function fetchPageHtml(url: string): Promise<string> {
+  const apiKey = process.env["ZENROWS_API_KEY"];
+  if (!apiKey) {
+    throw new Error("ZENROWS_API_KEY environment variable is not set");
   }
 
-  if (!browserInstance) {
-    browserInstance = await chromium.launch({
-      headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-blink-features=AutomationControlled",
-      ],
-    });
-    scrapeCount = 0;
-    lastRestartAt = Date.now();
-  }
+  const params = new URLSearchParams({
+    url,
+    apikey: apiKey,
+    js_render: "true",
+    premium_proxy: "true",
+    proxy_country: "us",
+    wait_for: "h1",
+  });
 
-  scrapeCount++;
-  return browserInstance;
-}
+  const zenrowsUrl = `https://api.zenrows.com/v1/?${params.toString()}`;
+  console.log(`[zenrows] Fetching: ${url}`);
 
-/**
- * Close the browser instance. Called on restart or graceful shutdown.
- */
-export async function closeBrowser(): Promise<void> {
-  if (browserInstance) {
-    await browserInstance.close().catch(() => {});
-    browserInstance = null;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 120000); // 120s timeout
+
+  try {
+    const response = await fetch(zenrowsUrl, { signal: controller.signal });
+    const html = await response.text();
+    console.log(`[zenrows] Response: status=${response.status}, length=${html.length}`);
+
+    if (!response.ok) {
+      throw new Error(`ZenRows error ${response.status}: ${html.substring(0, 500)}`);
+    }
+
+    return html;
+  } finally {
+    clearTimeout(timeout);
   }
 }

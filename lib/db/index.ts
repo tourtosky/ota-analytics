@@ -9,7 +9,7 @@ function getDatabase() {
 
   // Create a postgres connection
   const connectionString = process.env.DATABASE_URL;
-  const client = postgres(connectionString);
+  const client = postgres(connectionString, { max: 5 });
 
   // Create drizzle instance
   return drizzle(client, { schema });

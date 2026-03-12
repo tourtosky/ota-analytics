@@ -9,7 +9,9 @@ export function buildViatorUrl(
   destinationRef: string,
   productCode: string
 ): string {
-  return `https://www.viator.com/tours/d${destinationRef}-${productCode}`;
+  // Use placeholder slug — Viator resolves any slug to the correct page
+  // as long as the d{destRef}-{productCode} suffix is correct.
+  return `https://www.viator.com/tours/destination/tour/d${destinationRef}-${productCode}`;
 }
 
 /**
