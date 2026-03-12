@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { logAdminEvent } from "@/lib/admin/events";
 import {
   ViatorProduct,
   CompetitorData,
@@ -93,6 +94,7 @@ Provide 5-7 specific recommendations as a JSON array.`;
 
   try {
     const anthropic = getAnthropicClient();
+    const startTime = Date.now();
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 2000,
@@ -102,6 +104,11 @@ Provide 5-7 specific recommendations as a JSON array.`;
           content: systemPrompt + "\n\n" + userMessage,
         },
       ],
+    });
+    logAdminEvent("api_call", {
+      service: "anthropic",
+      endpoint: "messages",
+      durationMs: Date.now() - startTime,
     });
 
     const content = message.content[0];
@@ -170,6 +177,7 @@ Provide the analysis as a JSON object.`;
 
   try {
     const anthropic = getAnthropicClient();
+    const startTime = Date.now();
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 1500,
@@ -179,6 +187,11 @@ Provide the analysis as a JSON object.`;
           content: systemPrompt + "\n\n" + userMessage,
         },
       ],
+    });
+    logAdminEvent("api_call", {
+      service: "anthropic",
+      endpoint: "messages",
+      durationMs: Date.now() - startTime,
     });
 
     const content = message.content[0];

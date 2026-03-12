@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, integer, jsonb, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, text, integer, jsonb, timestamp, serial, index } from "drizzle-orm/pg-core";
 import { InferSelectModel, InferInsertModel } from "drizzle-orm";
 
 export const analyses = pgTable("analyses", {
@@ -21,6 +21,7 @@ export const analyses = pgTable("analyses", {
   reviewInsights: jsonb("review_insights"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),
+  dataSource: varchar("data_source", { length: 20 }),
 });
 
 export type Analysis = InferSelectModel<typeof analyses>;
@@ -36,3 +37,16 @@ export const scrapedPages = pgTable("scraped_pages", {
   scrapedAt: timestamp("scraped_at").defaultNow().notNull(),
   expiresAt: timestamp("expires_at").notNull(),
 });
+
+export const adminEvents = pgTable(
+  "admin_events",
+  {
+    id: serial("id").primaryKey(),
+    event: varchar("event", { length: 50 }).notNull(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("admin_events_event_created_idx").on(table.event, table.createdAt),
+  ]
+);
