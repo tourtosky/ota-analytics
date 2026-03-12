@@ -149,6 +149,7 @@ export interface CompetitorData {
   currency: string;
   photoCount: number;
   flags?: string[];
+  destinationRef: string;   // destination ref for URL construction
 }
 
 export interface AIRecommendation {

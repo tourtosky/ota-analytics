@@ -94,6 +94,7 @@ export async function formatCompetitorData(
       currency: product.pricing?.currency || "USD",
       photoCount: 0, // Will be enriched from bulk fetch
       flags: product.flags || [],
+      destinationRef: product.destinations?.[0]?.ref ?? "",
     }));
 
   // Fetch full product details to get real photo counts
