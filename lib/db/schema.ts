@@ -1,8 +1,22 @@
-import { pgTable, uuid, varchar, text, integer, jsonb, timestamp, serial, index } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, text, integer, jsonb, timestamp, serial, index, pgEnum } from "drizzle-orm/pg-core";
 import { InferSelectModel, InferInsertModel } from "drizzle-orm";
+
+export const userRoleEnum = pgEnum("user_role", ["admin", "client"]);
+
+export const profiles = pgTable("profiles", {
+  id: uuid("id").primaryKey(), // matches Supabase auth.users.id
+  role: userRoleEnum("role").default("client").notNull(),
+  fullName: text("full_name"),
+  companyName: text("company_name"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Profile = InferSelectModel<typeof profiles>;
+export type NewProfile = InferInsertModel<typeof profiles>;
 
 export const analyses = pgTable("analyses", {
   id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id"),
   viatorProductCode: varchar("viator_product_code", { length: 20 }).notNull(),
   productTitle: text("product_title"),
   status: varchar("status", { length: 20 }).default("pending").notNull(),
@@ -22,6 +36,11 @@ export const analyses = pgTable("analyses", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),
   dataSource: varchar("data_source", { length: 20 }),
+  progress: jsonb("progress").$type<{
+    step: string;
+    percent: number;
+    message: string;
+  }>(),
 });
 
 export type Analysis = InferSelectModel<typeof analyses>;

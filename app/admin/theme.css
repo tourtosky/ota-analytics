@@ -1,0 +1,134 @@
+/* Admin dashboard theme tokens */
+.admin-theme {
+  --adm-bg: #0F172A;
+  --adm-bg-card: rgba(255, 255, 255, 0.05);
+  --adm-bg-card-border: rgba(255, 255, 255, 0.1);
+  --adm-bg-card-hover: rgba(255, 255, 255, 0.03);
+  --adm-bg-input: rgba(30, 41, 59, 0.5);
+  --adm-bg-elevated: rgba(30, 41, 59, 0.3);
+  --adm-bg-skeleton: #334155;
+  --adm-border: rgba(255, 255, 255, 0.05);
+  --adm-border-input: rgba(255, 255, 255, 0.1);
+  --adm-text: #e2e8f0;
+  --adm-text-primary: #ffffff;
+  --adm-text-secondary: #94a3b8;
+  --adm-text-muted: #64748b;
+  --adm-text-faint: #475569;
+  --adm-ring-btn: #334155;
+  --adm-bg-btn: #1e293b;
+  --adm-bg-btn-hover: #334155;
+  --adm-bar-track: #1e293b;
+  --adm-pre-bg: rgba(30, 41, 59, 0.3);
+}
+
+.admin-theme.light {
+  --adm-bg: #f8fafc;
+  --adm-bg-card: rgba(255, 255, 255, 0.9);
+  --adm-bg-card-border: #e2e8f0;
+  --adm-bg-card-hover: rgba(0, 0, 0, 0.02);
+  --adm-bg-input: #f1f5f9;
+  --adm-bg-elevated: #f1f5f9;
+  --adm-bg-skeleton: #e2e8f0;
+  --adm-border: #e2e8f0;
+  --adm-border-input: #cbd5e1;
+  --adm-text: #1e293b;
+  --adm-text-primary: #0f172a;
+  --adm-text-secondary: #64748b;
+  --adm-text-muted: #94a3b8;
+  --adm-text-faint: #cbd5e1;
+  --adm-ring-btn: #e2e8f0;
+  --adm-bg-btn: #ffffff;
+  --adm-bg-btn-hover: #f1f5f9;
+  --adm-bar-track: #e2e8f0;
+  --adm-pre-bg: #f1f5f9;
+}
+
+/* Apply theme tokens */
+.admin-theme {
+  background-color: var(--adm-bg);
+  color: var(--adm-text);
+}
+
+/* Glass card override */
+.admin-theme .adm-card {
+  background-color: var(--adm-bg-card);
+  border: 1px solid var(--adm-bg-card-border);
+  backdrop-filter: blur(12px);
+}
+
+/* Input fields */
+.admin-theme .adm-input {
+  background-color: var(--adm-bg-input);
+  border: 1px solid var(--adm-border-input);
+  color: var(--adm-text);
+}
+.admin-theme .adm-input::placeholder {
+  color: var(--adm-text-muted);
+}
+.admin-theme .adm-input:focus {
+  border-color: #0ea5e9;
+  outline: none;
+}
+
+/* Buttons */
+.admin-theme .adm-btn {
+  background-color: var(--adm-bg-btn);
+  border: 1px solid var(--adm-ring-btn);
+  color: var(--adm-text-secondary);
+}
+.admin-theme .adm-btn:hover {
+  background-color: var(--adm-bg-btn-hover);
+}
+
+/* Table */
+.admin-theme .adm-table-border {
+  border-color: var(--adm-border);
+}
+.admin-theme .adm-row-hover:hover {
+  background-color: var(--adm-bg-card-hover);
+}
+
+/* Elevated surfaces */
+.admin-theme .adm-elevated {
+  background-color: var(--adm-bg-elevated);
+}
+
+/* Pre/code blocks */
+.admin-theme .adm-pre {
+  background-color: var(--adm-pre-bg);
+  border: 1px solid var(--adm-border);
+}
+
+/* Progress bar track */
+.admin-theme .adm-bar-track {
+  background-color: var(--adm-bar-track);
+}
+
+/* Skeleton */
+.admin-theme .adm-skeleton {
+  background-color: var(--adm-bg-skeleton);
+}
+
+/* Score distribution chart bar track */
+.admin-theme .adm-chart-track {
+  background-color: var(--adm-bar-track);
+}
+
+/* Detail panel */
+.admin-theme .adm-detail-bg {
+  background-color: var(--adm-bg-elevated);
+  border-top: 1px solid var(--adm-border);
+}
+
+/* Text utilities */
+.admin-theme .adm-text-primary { color: var(--adm-text-primary); }
+.admin-theme .adm-text { color: var(--adm-text); }
+.admin-theme .adm-text-secondary { color: var(--adm-text-secondary); }
+.admin-theme .adm-text-muted { color: var(--adm-text-muted); }
+.admin-theme .adm-text-faint { color: var(--adm-text-faint); }
+
+/* Light mode badge adjustments - badges use tailwind opacity classes that work in both modes */
+.admin-theme.light .adm-select option {
+  background-color: #ffffff;
+  color: #1e293b;
+}

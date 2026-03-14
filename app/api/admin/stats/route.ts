@@ -5,6 +5,23 @@ import { eq, sql, and, gte, ilike, desc, count } from "drizzle-orm";
 
 const PAGE_SIZE = 20;
 
+function getTimeRangeStart(range: string): Date | null {
+  const now = new Date();
+  switch (range) {
+    case "today": {
+      const start = new Date(now);
+      start.setHours(0, 0, 0, 0);
+      return start;
+    }
+    case "7d":
+      return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    case "30d":
+      return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    default:
+      return null;
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
   const searchParams = request.nextUrl.searchParams;
@@ -12,6 +29,7 @@ export async function GET(request: NextRequest) {
   const statusFilter = searchParams.get("status") || "all";
   const dataSourceFilter = searchParams.get("dataSource") || "all";
   const search = searchParams.get("search") || "";
+  const timeRange = searchParams.get("timeRange") || "all";
 
   // Build filter conditions for analyses
   const conditions = [];
@@ -20,7 +38,6 @@ export async function GET(request: NextRequest) {
   }
   if (dataSourceFilter !== "all") {
     if (dataSourceFilter === "api-only") {
-      // Include null (legacy rows) as api-only
       conditions.push(
         sql`(${analyses.dataSource} = 'api-only' OR ${analyses.dataSource} IS NULL)`
       );
@@ -29,12 +46,18 @@ export async function GET(request: NextRequest) {
     }
   }
   if (search) {
-    conditions.push(ilike(analyses.viatorProductCode, `%${search}%`));
+    conditions.push(
+      sql`(${ilike(analyses.viatorProductCode, `%${search}%`)} OR ${ilike(analyses.productTitle, `%${search}%`)})`
+    );
+  }
+
+  const timeRangeStart = getTimeRangeStart(timeRange);
+  if (timeRangeStart) {
+    conditions.push(gte(analyses.createdAt, timeRangeStart));
   }
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-  // Run queries in parallel
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
   const todayStartISO = todayStart.toISOString();
@@ -49,6 +72,8 @@ export async function GET(request: NextRequest) {
     apiEvents,
     recentScrapingEvents,
     recentApiEvents,
+    scoreDistResult,
+    avgProcessingResult,
   ] = await Promise.all([
     // Aggregate stats
     db
@@ -130,12 +155,46 @@ export async function GET(request: NextRequest) {
       .where(eq(adminEvents.event, "api_call"))
       .orderBy(desc(adminEvents.createdAt))
       .limit(50),
+
+    // Score distribution (5 buckets: 0-20, 21-40, 41-60, 61-80, 81-100)
+    db.execute(sql`
+      SELECT
+        count(*) filter (where ${analyses.overallScore} between 0 and 20) as bucket_0_20,
+        count(*) filter (where ${analyses.overallScore} between 21 and 40) as bucket_21_40,
+        count(*) filter (where ${analyses.overallScore} between 41 and 60) as bucket_41_60,
+        count(*) filter (where ${analyses.overallScore} between 61 and 80) as bucket_61_80,
+        count(*) filter (where ${analyses.overallScore} between 81 and 100) as bucket_81_100
+      FROM analyses
+      WHERE ${analyses.overallScore} IS NOT NULL
+    `),
+
+    // Average processing time from admin events
+    db.execute(sql`
+      SELECT round(avg((metadata->>'durationMs')::numeric)) as avg_ms
+      FROM admin_events
+      WHERE event = 'analysis_completed'
+        AND metadata->>'durationMs' IS NOT NULL
+    `),
   ]);
 
   const stats = statsResult[0];
   const total = totalResult[0].count;
   const todayCount = todayResult[0].count;
   const cacheEntries = Number((cacheResult as unknown as { count: number }[])[0]?.count ?? 0);
+
+  // Score distribution
+  const distRow = (scoreDistResult as unknown as Record<string, unknown>[])[0] || {};
+  const scoreDistribution = [
+    Number(distRow.bucket_0_20 ?? 0),
+    Number(distRow.bucket_21_40 ?? 0),
+    Number(distRow.bucket_41_60 ?? 0),
+    Number(distRow.bucket_61_80 ?? 0),
+    Number(distRow.bucket_81_100 ?? 0),
+  ];
+
+  // Avg processing time
+  const avgRow = (avgProcessingResult as unknown as { avg_ms: number | null }[])[0];
+  const avgProcessingTime = avgRow?.avg_ms ? Number(avgRow.avg_ms) : null;
 
   // Build scraping summary
   const scrapeMap = Object.fromEntries(
@@ -172,6 +231,8 @@ export async function GET(request: NextRequest) {
       todayCount,
       scrapeSuccessRate,
       cacheEntries,
+      scoreDistribution,
+      avgProcessingTime,
     },
     analyses: {
       items: analysisItems,

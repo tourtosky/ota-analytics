@@ -355,7 +355,7 @@ export class ViatorScraper implements PlatformScraper {
     // DOM fallback
     const depSection = this.getTextFromDOM($, SELECTORS.departureReturn);
     if (depSection) {
-      const meetingMatch = depSection.match(/Meeting point\s*(.+?)(?:End point|$)/is);
+      const meetingMatch = depSection.match(new RegExp("Meeting point\\s*(.+?)(?:End point|$)", "is"));
       if (meetingMatch) return meetingMatch[1].trim().substring(0, 300);
     }
     return "";

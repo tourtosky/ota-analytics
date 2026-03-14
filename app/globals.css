@@ -1,28 +1,25 @@
 @import "tailwindcss";
 
 @theme {
-  /* Colors */
-  --color-background: #0F172A;
-  --color-foreground: #F1F5F9;
-  --color-primary: #0EA5E9;
-  --color-primary-dark: #0284C7;
-  --color-dark: #0F172A;
-  --color-dark-lighter: #1E293B;
-  --color-dark-card: #1E293B;
+  --color-background: #ffffff;
+  --color-foreground: #0f172a;
+  --color-primary: #0891b2;
+  --color-primary-dark: #0e7490;
+  --color-accent: #7c3aed;
+  --color-surface: #f8fafc;
 
-  /* Font families */
   --font-sans: var(--font-sans);
   --font-display: var(--font-display);
   --font-mono: var(--font-mono);
 }
 
 * {
-  border-color: rgb(55 65 81);
+  border-color: rgb(226 232 240);
 }
 
 body {
-  background-color: var(--color-dark);
-  color: var(--color-foreground);
+  background-color: #ffffff;
+  color: #0f172a;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -33,6 +30,37 @@ h1, h2, h3, h4, h5, h6 {
   text-wrap: balance;
 }
 
+/* Gradient text — works on light bg */
+.gradient-text {
+  background: linear-gradient(135deg, #0891b2, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Animated gradient for buttons */
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.btn-gradient {
+  background: linear-gradient(135deg, #0891b2, #7c3aed, #0891b2);
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+/* Floating animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Glass for admin dark mode only */
 .glass {
   background-color: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(12px);

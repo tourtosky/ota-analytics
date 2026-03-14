@@ -5,16 +5,13 @@ import { eq } from "drizzle-orm";
 import { fetchProduct, searchCompetitors, formatCompetitorData, getSearchResultPrice, fetchProductPrice } from "@/lib/viator/products";
 import { fetchReviews } from "@/lib/viator/reviews";
 import { calculateScores } from "@/lib/analysis/scoring";
-import { generateRecommendations, generateReviewInsights } from "@/lib/analysis/recommendations";
-import { getScraperForUrl } from "@/lib/scraping/scraper-factory";
-import { buildViatorUrl } from "@/lib/scraping/viator/urls";
 import { mergeProductData } from "@/lib/scraping/merge";
 import { logAdminEvent } from "@/lib/admin/events";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { productCode, sourceUrl } = body;
+    const { productCode } = body;
 
     if (!productCode) {
       return NextResponse.json(
@@ -38,9 +35,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Start processing asynchronously (don't await)
-    processAnalysis(analysis.id, productCode, sourceUrl).catch(async (error) => {
+    processAnalysis(analysis.id, productCode).catch(async (error) => {
       console.error("Error processing analysis:", error);
-      // Update status to failed
       await db.update(analyses)
         .set({
           status: "failed",
@@ -63,43 +59,42 @@ export async function POST(request: NextRequest) {
   }
 }
 
+async function updateProgress(analysisId: string, step: string, percent: number, message: string) {
+  await db.update(analyses).set({ progress: { step, percent, message } }).where(eq(analyses.id, analysisId));
+}
+
 /**
- * Process the analysis asynchronously
+ * Express analysis pipeline — Viator API only (no scraping, no AI).
+ * Delivers scores + competitor data in ~5-8 seconds.
+ * AI recommendations & review insights are left null (shown as blurred/locked on the frontend).
  */
-async function processAnalysis(analysisId: string, productCode: string, sourceUrl?: string) {
+async function processAnalysis(analysisId: string, productCode: string) {
   try {
     const pipelineStart = Date.now();
 
     // 1. Fetch the product
+    await updateProgress(analysisId, "fetching_product", 10, "Fetching your listing from Viator...");
     console.log(`Fetching product: ${productCode}`);
     let viatorStart = Date.now();
     const product = await fetchProduct(productCode);
     logAdminEvent("api_call", { service: "viator", endpoint: `/products/${productCode}`, durationMs: Date.now() - viatorStart });
-    console.log(`Product fetched:`, {
-      title: product.title,
-      destinations: product.destinations,
-      tags: product.tags,
-    });
 
     // Get primary destination and tag
     const primaryDestination = product.destinations?.[0]?.ref;
-    // Tags can be numbers or objects - handle both
     const primaryTag = product.tags?.[0];
     const primaryTagRef = typeof primaryTag === 'number'
       ? primaryTag.toString()
       : (primaryTag as any)?.ref;
 
     if (!primaryDestination || !primaryTagRef) {
-      console.error("Product data structure:", JSON.stringify(product, null, 2));
       throw new Error(
         `Product missing destination or category information. ` +
         `Destinations: ${product.destinations?.length || 0}, Tags: ${product.tags?.length || 0}`
       );
     }
 
-    console.log(`Using destination: ${primaryDestination}, tag: ${primaryTagRef}`);
-
-    // 2. Find competitors (also returns operator's search result for pricing)
+    // 2. Find competitors + pricing
+    await updateProgress(analysisId, "finding_competitors", 30, "Searching for top competitors...");
     viatorStart = Date.now();
     const { competitors: competitorResults, operatorSearchResult } = await searchCompetitors(
       primaryDestination,
@@ -107,12 +102,9 @@ async function processAnalysis(analysisId: string, productCode: string, sourceUr
       productCode,
       10
     );
-
     logAdminEvent("api_call", { service: "viator", endpoint: "/search/products", durationMs: Date.now() - viatorStart });
-    console.log(`Found ${competitorResults.length} competitor products`);
 
-    // Enrich operator product with pricing
-    // (full product endpoint doesn't include fromPrice)
+    // Enrich pricing
     if (operatorSearchResult) {
       const operatorPrice = getSearchResultPrice(operatorSearchResult);
       product.pricing = {
@@ -121,8 +113,6 @@ async function processAnalysis(analysisId: string, productCode: string, sourceUr
         currency: operatorPrice.currency,
       };
     } else {
-      // Product not in search results - fetch price via availability check
-      console.log("Operator not in search results, fetching price via availability check");
       const operatorPrice = await fetchProductPrice(productCode);
       product.pricing = {
         ...product.pricing,
@@ -132,48 +122,20 @@ async function processAnalysis(analysisId: string, productCode: string, sourceUr
     }
 
     const competitors = await formatCompetitorData(competitorResults);
-    console.log(`Formatted ${competitors.length} competitors with complete data`);
-
-    // 2b. Scrape operator page for full content
-    // Prefer the original URL the user submitted (has correct slugs for Viator)
-    const operatorUrl = (sourceUrl && sourceUrl.includes("viator.com"))
-      ? sourceUrl
-      : buildViatorUrl(product.destinations[0]?.ref ?? "", productCode);
-    console.log(`Scraping operator page: ${operatorUrl}`);
-    const operatorScraper = getScraperForUrl(operatorUrl);
-    const operatorScrapeResult = await operatorScraper
-      .scrape(operatorUrl)
-      .catch((err) => {
-        console.warn(`Operator scrape failed (continuing with API only):`, err);
-        return { listing: null, cached: false, error: err instanceof Error ? err.message : String(err) };
-      });
-    const operatorScrape = operatorScrapeResult.listing;
-
-    // Competitor scraping disabled — not used in scoring and costs ZenRows credits
-    // Competitor data comes from Viator API search results instead
-
-    // Merge API + scrape data
-    const mergedProduct = mergeProductData(product, operatorScrape);
-    console.log(
-      `Scrape result: dataSource=${mergedProduct.dataSource}, ` +
-      `descriptionLength=${mergedProduct.description.length}, ` +
-      `highlights=${mergedProduct.highlights.length}`
-    );
 
     // 3. Fetch reviews (operator + top 3 competitors)
+    await updateProgress(analysisId, "fetching_reviews", 55, "Analyzing reviews...");
     const operatorReviews = await fetchReviews(productCode, 20);
-
-    const competitorReviewsPromises = competitors
-      .slice(0, 3)
-      .map((c) => fetchReviews(c.productCode, 20));
-
-    const competitorReviewsArrays = await Promise.all(competitorReviewsPromises);
+    const competitorReviewsArrays = await Promise.all(
+      competitors.slice(0, 3).map((c) => fetchReviews(c.productCode, 20))
+    );
     const competitorReviews = competitorReviewsArrays.flat();
 
-    // 4. Calculate scores
+    // 4. Calculate scores (API-only data, no scrape enrichment)
+    await updateProgress(analysisId, "calculating_scores", 80, "Crunching the numbers...");
+    const mergedProduct = mergeProductData(product, null); // API-only
     const scores = calculateScores(mergedProduct, competitors);
 
-    // Guard against NaN scores (can happen with missing competitor data)
     const safeScore = (v: number) => (Number.isFinite(v) ? v : 0);
     scores.title = safeScore(scores.title);
     scores.description = safeScore(scores.description);
@@ -183,13 +145,8 @@ async function processAnalysis(analysisId: string, productCode: string, sourceUr
     scores.completeness = safeScore(scores.completeness);
     scores.overall = safeScore(scores.overall);
 
-    // 5. Generate AI recommendations (parallel)
-    const [recommendations, reviewInsights] = await Promise.all([
-      generateRecommendations(mergedProduct, competitors, operatorReviews, competitorReviews),
-      generateReviewInsights(operatorReviews, competitorReviews),
-    ]);
-
-    // 6. Update analysis with results
+    // 5. Save — no AI recommendations or review insights (shown blurred on frontend)
+    await updateProgress(analysisId, "saving", 95, "Finalizing your report...");
     await db
       .update(analyses)
       .set({
@@ -206,18 +163,18 @@ async function processAnalysis(analysisId: string, productCode: string, sourceUr
         },
         productData: mergedProduct as unknown as Record<string, unknown>,
         competitorsData: competitors as any,
-        recommendations: recommendations as any,
-        reviewInsights: reviewInsights as any,
+        recommendations: null,
+        reviewInsights: null,
         completedAt: new Date(),
-        dataSource: mergedProduct.dataSource,
+        dataSource: "api-only",
       })
       .where(eq(analyses.id, analysisId));
 
-    console.log(`Analysis ${analysisId} completed successfully`);
+    console.log(`Express analysis ${analysisId} completed in ${Date.now() - pipelineStart}ms`);
     logAdminEvent("analysis_completed", {
       analysisId,
       score: scores.overall,
-      dataSource: mergedProduct.dataSource,
+      dataSource: "api-only",
       durationMs: Date.now() - pipelineStart,
     });
   } catch (error) {

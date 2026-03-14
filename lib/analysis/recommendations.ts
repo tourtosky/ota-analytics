@@ -1,5 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { logAdminEvent } from "@/lib/admin/events";
+import { completion, getDefaultProvider, type AIProvider } from "@/lib/ai/provider";
 import {
   ViatorProduct,
   CompetitorData,
@@ -8,15 +7,6 @@ import {
   ReviewInsight,
 } from "../viator/types";
 
-function getAnthropicClient() {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error("ANTHROPIC_API_KEY environment variable is not set");
-  }
-  return new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-  });
-}
-
 /**
  * Generate AI-powered recommendations for improving the listing
  */
@@ -24,9 +14,9 @@ export async function generateRecommendations(
   product: ViatorProduct,
   competitors: CompetitorData[],
   operatorReviews: ViatorReview[],
-  competitorReviews: ViatorReview[]
+  competitorReviews: ViatorReview[],
+  provider?: AIProvider
 ): Promise<AIRecommendation[]> {
-  // Build competitor summary
   const competitorSummary = competitors
     .slice(0, 8)
     .map(
@@ -35,14 +25,12 @@ export async function generateRecommendations(
     )
     .join("\n");
 
-  // Build negative reviews summary
   const negativeReviews = operatorReviews
     .filter((r) => r.rating <= 3)
     .slice(0, 5)
     .map((r) => `- ${r.rating}⭐: ${r.text.slice(0, 200)}`)
     .join("\n");
 
-  // Build competitor review highlights
   const competitorPositives = competitorReviews
     .filter((r) => r.rating >= 4)
     .slice(0, 10)
@@ -93,40 +81,22 @@ Complaints: ${competitorNegatives || "No negative reviews available"}
 Provide 5-7 specific recommendations as a JSON array.`;
 
   try {
-    const anthropic = getAnthropicClient();
-    const startTime = Date.now();
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 2000,
-      messages: [
-        {
-          role: "user",
-          content: systemPrompt + "\n\n" + userMessage,
-        },
-      ],
-    });
-    logAdminEvent("api_call", {
-      service: "anthropic",
-      endpoint: "messages",
-      durationMs: Date.now() - startTime,
+    const result = await completion({
+      provider: provider ?? getDefaultProvider(),
+      systemPrompt,
+      userMessage,
+      maxTokens: 2000,
     });
 
-    const content = message.content[0];
-    if (content.type !== "text") {
-      throw new Error("Unexpected response type from Claude API");
-    }
-
-    // Parse JSON response
-    const jsonMatch = content.text.match(/\[[\s\S]*\]/);
+    const jsonMatch = result.text.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
-      throw new Error("Could not find JSON array in Claude response");
+      throw new Error("Could not find JSON array in AI response");
     }
 
     const recommendations: AIRecommendation[] = JSON.parse(jsonMatch[0]);
     return recommendations;
   } catch (error) {
     console.error("Error generating recommendations:", error);
-    // Return fallback recommendations
     return [
       {
         priority: "high",
@@ -144,7 +114,8 @@ Provide 5-7 specific recommendations as a JSON array.`;
  */
 export async function generateReviewInsights(
   operatorReviews: ViatorReview[],
-  competitorReviews: ViatorReview[]
+  competitorReviews: ViatorReview[],
+  provider?: AIProvider
 ): Promise<ReviewInsight> {
   const operatorReviewText = operatorReviews
     .slice(0, 20)
@@ -176,40 +147,22 @@ ${competitorReviewText || "No competitor reviews available"}
 Provide the analysis as a JSON object.`;
 
   try {
-    const anthropic = getAnthropicClient();
-    const startTime = Date.now();
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1500,
-      messages: [
-        {
-          role: "user",
-          content: systemPrompt + "\n\n" + userMessage,
-        },
-      ],
-    });
-    logAdminEvent("api_call", {
-      service: "anthropic",
-      endpoint: "messages",
-      durationMs: Date.now() - startTime,
+    const result = await completion({
+      provider: provider ?? getDefaultProvider(),
+      systemPrompt,
+      userMessage,
+      maxTokens: 1500,
     });
 
-    const content = message.content[0];
-    if (content.type !== "text") {
-      throw new Error("Unexpected response type from Claude API");
-    }
-
-    // Parse JSON response
-    const jsonMatch = content.text.match(/\{[\s\S]*\}/);
+    const jsonMatch = result.text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      throw new Error("Could not find JSON object in Claude response");
+      throw new Error("Could not find JSON object in AI response");
     }
 
     const insights: ReviewInsight = JSON.parse(jsonMatch[0]);
     return insights;
   } catch (error) {
     console.error("Error generating review insights:", error);
-    // Return fallback insights
     return {
       positives: [],
       negatives: [],

@@ -33,7 +33,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${jakarta.variable} ${playfair.variable} ${jetbrains.variable}`}>
-      <body className="font-sans antialiased bg-dark text-gray-100">
+      <body className="font-sans antialiased">
         {children}
       </body>
     </html>

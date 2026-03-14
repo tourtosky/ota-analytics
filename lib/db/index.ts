@@ -2,18 +2,21 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
 
+// Prevent creating multiple connection pools in dev (hot reload)
+const globalForDb = globalThis as unknown as {
+  pgClient: ReturnType<typeof postgres> | undefined;
+};
+
 function getDatabase() {
   if (!process.env.DATABASE_URL) {
     throw new Error("DATABASE_URL environment variable is not set");
   }
 
-  // Create a postgres connection
-  const connectionString = process.env.DATABASE_URL;
-  const client = postgres(connectionString, { max: 5 });
+  if (!globalForDb.pgClient) {
+    globalForDb.pgClient = postgres(process.env.DATABASE_URL, { max: 3 });
+  }
 
-  // Create drizzle instance
-  return drizzle(client, { schema });
+  return drizzle(globalForDb.pgClient, { schema });
 }
 
-// Export db instance - will be created on first use
 export const db = getDatabase();
