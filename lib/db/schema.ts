@@ -2,10 +2,12 @@ import { pgTable, uuid, varchar, text, integer, jsonb, timestamp, serial, index,
 import { InferSelectModel, InferInsertModel } from "drizzle-orm";
 
 export const userRoleEnum = pgEnum("user_role", ["admin", "client"]);
+export const userPlanEnum = pgEnum("user_plan", ["free", "growth", "pro"]);
 
 export const profiles = pgTable("profiles", {
   id: uuid("id").primaryKey(), // matches Supabase auth.users.id
   role: userRoleEnum("role").default("client").notNull(),
+  plan: userPlanEnum("plan").default("free").notNull(),
   fullName: text("full_name"),
   companyName: text("company_name"),
   createdAt: timestamp("created_at").defaultNow().notNull(),

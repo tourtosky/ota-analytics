@@ -1,353 +1,395 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import {
-  TrendingUp,
-  TrendingDown,
-  ExternalLink,
-  Plus,
-  BarChart3,
-  Target,
-  MessageSquare,
-  Star,
-  LogOut,
-  ChevronRight,
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  Sparkles,
-} from "lucide-react";
+import { Plus, Loader2, Search, X, ArrowRight, BarChart3 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import UpgradeModal from "@/components/dashboard/UpgradeModal";
+import { PLAN_LIMITS, type Plan } from "@/lib/plans";
 
-/* ═══ Mock data ═══ */
-const mockListings = [
-  {
-    id: "1",
-    title: "Private Rome Colosseum Underground Tour",
-    productCode: "P12345",
-    score: 72,
-    prevScore: 58,
-    status: "completed" as const,
-    lastAnalyzed: "2 days ago",
-    scores: { title: 85, description: 68, pricing: 92, reviews: 45, photos: 62, completeness: 78 },
-    topRecommendation: "Add 5 more photos — you're at 7, median is 12",
-  },
-  {
-    id: "2",
-    title: "Skip-the-Line Vatican Museums & Sistine Chapel",
-    productCode: "P67890",
-    score: 43,
-    prevScore: 43,
-    status: "completed" as const,
-    lastAnalyzed: "1 week ago",
-    scores: { title: 35, description: 52, pricing: 78, reviews: 28, photos: 15, completeness: 48 },
-    topRecommendation: "Rewrite title to include 'small group' — 8 of 10 competitors use it",
-  },
-  {
-    id: "3",
-    title: "Amalfi Coast Day Trip from Naples",
-    productCode: "P11223",
-    score: 88,
-    prevScore: 71,
-    status: "completed" as const,
-    lastAnalyzed: "5 days ago",
-    scores: { title: 92, description: 85, pricing: 88, reviews: 90, photos: 82, completeness: 95 },
-    topRecommendation: "Your listing is performing well — consider A/B testing a lower price point",
-  },
-  {
-    id: "4",
-    title: "Florence Food Tour with Wine Tasting",
-    productCode: "P44556",
-    score: null,
-    prevScore: null,
-    status: "processing" as const,
-    lastAnalyzed: "Just now",
-    scores: null,
-    topRecommendation: null,
-  },
-];
-
-const mockActivity = [
-  { action: "Analysis completed", listing: "Private Rome Colosseum Underground Tour", time: "2 days ago", type: "success" as const },
-  { action: "Score improved +14", listing: "Amalfi Coast Day Trip from Naples", time: "5 days ago", type: "improvement" as const },
-  { action: "Analysis completed", listing: "Skip-the-Line Vatican Museums", time: "1 week ago", type: "success" as const },
-  { action: "New listing added", listing: "Florence Food Tour with Wine Tasting", time: "Just now", type: "new" as const },
-];
-
-/* ═══ Score badge ═══ */
-function ScoreBadge({ score }: { score: number | null }) {
-  if (score === null) return <span className="text-xs text-slate-400 font-mono">---</span>;
-  const color = score >= 80 ? "text-emerald-600 bg-emerald-50" : score >= 60 ? "text-amber-600 bg-amber-50" : "text-red-500 bg-red-50";
-  return <span className={`inline-flex items-center px-2.5 py-1 rounded-lg font-mono font-bold text-lg ${color}`}>{score}</span>;
+interface AnalysisItem {
+  id: string;
+  viatorProductCode: string;
+  productTitle: string | null;
+  status: string;
+  overallScore: number | null;
+  scores: {
+    title: number;
+    description: number;
+    pricing: number;
+    reviews: number;
+    photos: number;
+    completeness: number;
+  } | null;
+  createdAt: string;
+  completedAt: string | null;
+  progress: { step: string; percent: number; message: string } | null;
 }
 
-/* ═══ Score change indicator ═══ */
-function ScoreChange({ current, prev }: { current: number | null; prev: number | null }) {
-  if (current === null || prev === null) return null;
-  const diff = current - prev;
-  if (diff === 0) return <span className="text-xs text-slate-400">No change</span>;
-  if (diff > 0) return <span className="text-xs text-emerald-600 font-semibold flex items-center gap-0.5"><TrendingUp className="w-3 h-3" />+{diff}</span>;
-  return <span className="text-xs text-red-500 font-semibold flex items-center gap-0.5"><TrendingDown className="w-3 h-3" />{diff}</span>;
-}
-
-/* ═══ Mini score bar ═══ */
-function MiniBar({ label, value }: { label: string; value: number }) {
-  const color = value >= 80 ? "bg-emerald-500" : value >= 60 ? "bg-amber-500" : "bg-red-500";
+/* ─── Score badge ─── */
+function ScoreBadge({ score, size = "md" }: { score: number | null; size?: "sm" | "md" }) {
+  if (score === null) return null;
+  const color = score >= 70 ? "text-emerald-600 bg-emerald-50 ring-emerald-200" : score >= 50 ? "text-amber-600 bg-amber-50 ring-amber-200" : "text-red-600 bg-red-50 ring-red-200";
+  const s = size === "sm" ? "w-10 h-10 text-sm" : "w-12 h-12 text-lg";
   return (
-    <div className="flex items-center gap-3 text-xs">
-      <span className="text-slate-400 w-24 flex-shrink-0">{label}</span>
-      <div className="flex-1 h-1.5 bg-slate-100 rounded-full">
-        <div className={`h-full ${color} rounded-full`} style={{ width: `${value}%` }} />
-      </div>
-      <span className="font-mono font-bold text-slate-600 w-6 text-right">{value}</span>
+    <div className={`${s} rounded-xl ${color} ring-1 font-mono font-bold flex items-center justify-center flex-shrink-0`}>
+      {score}
     </div>
   );
 }
 
-export default function DashboardPage() {
-  const [user, setUser] = useState<{ email: string; fullName: string | null } | null>(null);
-  const router = useRouter();
-  const supabase = createClient();
+/* ─── Status badge ─── */
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    completed: "bg-emerald-50 text-emerald-600 ring-emerald-200",
+    processing: "bg-sky-50 text-sky-600 ring-sky-200",
+    failed: "bg-red-50 text-red-600 ring-red-200",
+    pending: "bg-slate-100 text-slate-500 ring-slate-200",
+  };
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium ring-1 ${styles[status] || styles.pending}`}>
+      {status === "processing" && <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />}
+      {status}
+    </span>
+  );
+}
 
+/* ─── Mini category bar ─── */
+function CategoryBar({ label, score }: { label: string; score: number }) {
+  const color = score >= 70 ? "bg-emerald-500" : score >= 50 ? "bg-amber-500" : "bg-red-500";
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] text-slate-400 w-16 truncate">{label}</span>
+      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div className={`h-full ${color} rounded-full`} style={{ width: `${score}%` }} />
+      </div>
+      <span className="text-[10px] font-mono text-slate-400 w-5 text-right">{score}</span>
+    </div>
+  );
+}
+
+/* ─── Time ago helper ─── */
+function timeAgo(dateStr: string): string {
+  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+/* ─── Analyze modal ─── */
+function AnalyzeModal({ open, onClose, onPlanLimit }: { open: boolean; onClose: () => void; onPlanLimit: () => void }) {
+  const [url, setUrl] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
+
+  const extractProductCode = (input: string): string | null => {
+    const urlMatch = input.match(/\/d\d+-([A-Za-z0-9]+)/);
+    if (urlMatch) return urlMatch[1];
+    const codeMatch = input.match(/^([A-Za-z0-9]{4,})$/);
+    if (codeMatch) return codeMatch[1];
+    return null;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    const productCode = extractProductCode(url.trim());
+    if (!productCode) { setError("Please enter a valid listing URL or product code"); return; }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productCode }),
+      });
+      const data = await res.json();
+      if (res.status === 403 && data.error === "plan_limit_reached") {
+        onClose();
+        onPlanLimit();
+        return;
+      }
+      if (!res.ok) throw new Error(data.error || "Failed to start analysis");
+      router.push(`/dashboard/listings/${data.analysisId}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!open) { setUrl(""); setError(""); setLoading(false); }
+  }, [open]);
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    if (open) document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [open, onClose]);
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ duration: 0.2 }}
+            className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl shadow-slate-900/10 overflow-hidden"
+          >
+            <button onClick={onClose} className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+            <div className="px-8 pt-8 pb-2">
+              <h2 className="text-xl font-display font-bold text-slate-900">Analyze a Listing</h2>
+              <p className="text-sm text-slate-500 mt-1">Enter your listing URL or product code to start</p>
+            </div>
+            <form onSubmit={handleSubmit} className="px-8 pb-8 pt-4 space-y-4">
+              <div>
+                <input
+                  type="text"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="https://www.viator.com/tours/... or 12345P6"
+                  autoFocus
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-cyan-500 focus:bg-white transition-all text-sm"
+                />
+              </div>
+              {error && <p className="text-sm text-red-500">{error}</p>}
+              <button
+                type="submit"
+                disabled={loading || !url.trim()}
+                className="w-full py-3 btn-gradient text-white font-semibold rounded-xl text-sm shadow-lg shadow-cyan-700/20 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing...</> : <><Search className="w-4 h-4" /> Start Analysis</>}
+              </button>
+            </form>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+
+export default function DashboardPage() {
+  const [analyses, setAnalyses] = useState<AnalysisItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [userPlan, setUserPlan] = useState<Plan>("free");
+  const router = useRouter();
+
+  // Fetch user plan
   useEffect(() => {
     fetch("/api/auth/me")
       .then((r) => r.json())
-      .then((data) => {
-        if (data.error) {
-          router.push("/login");
-          return;
-        }
-        // If admin, redirect to admin dashboard
-        if (data.role === "admin") {
-          router.push("/admin");
-          return;
-        }
-        setUser({ email: data.email, fullName: data.fullName });
-      })
-      .catch(() => router.push("/login"));
-  }, [router]);
+      .then((data) => { if (data.plan) setUserPlan(data.plan); });
+  }, []);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
+  const fetchAnalyses = useCallback(async () => {
+    try {
+      const res = await fetch("/api/dashboard/analyses");
+      if (!res.ok) return;
+      const data = await res.json();
+      setAnalyses(data.analyses || []);
+    } catch { /* ignore */ }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchAnalyses(); }, [fetchAnalyses]);
+
+  // Poll if any analysis is processing/pending
+  useEffect(() => {
+    const hasActive = analyses.some((a) => a.status === "processing" || a.status === "pending");
+    if (!hasActive) return;
+    const timer = setInterval(fetchAnalyses, 3000);
+    return () => clearInterval(timer);
+  }, [analyses, fetchAnalyses]);
+
+  // Stats
+  const completed = analyses.filter((a) => a.status === "completed");
+  const avgScore = completed.length > 0
+    ? Math.round(completed.reduce((sum, a) => sum + (a.overallScore || 0), 0) / completed.length)
+    : null;
+  const needsWork = completed.filter((a) => (a.overallScore || 0) < 60).length;
+
+  const scoreAccent = (s: number | null) => {
+    if (s === null) return "text-slate-400";
+    if (s >= 70) return "text-emerald-600";
+    if (s >= 50) return "text-amber-600";
+    return "text-red-600";
   };
 
-  const avgScore = Math.round(
-    mockListings.filter((l) => l.score !== null).reduce((sum, l) => sum + (l.score || 0), 0) /
-    mockListings.filter((l) => l.score !== null).length
-  );
+  const isAtLimit = analyses.length >= PLAN_LIMITS[userPlan];
 
-  const completedCount = mockListings.filter((l) => l.status === "completed").length;
-  const needsWorkCount = mockListings.filter((l) => l.score !== null && l.score < 60).length;
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-cyan-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  const handleNewListing = () => {
+    if (isAtLimit) {
+      setShowUpgrade(true);
+    } else {
+      setShowModal(true);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="text-lg font-bold tracking-tight text-slate-900">
-              tour<span className="text-cyan-700">boost</span>
-            </Link>
-            <span className="text-xs font-medium text-slate-400 uppercase tracking-wider hidden sm:block">Dashboard</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-500 hidden sm:block">{user.email}</span>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-900 transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:block">Sign out</span>
-            </button>
-          </div>
-        </div>
-      </nav>
+    <div>
+      <AnalyzeModal open={showModal} onClose={() => setShowModal(false)} onPlanLimit={() => setShowUpgrade(true)} />
+      <UpgradeModal open={showUpgrade} onClose={() => setShowUpgrade(false)} plan={userPlan} />
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl font-display font-bold text-slate-900">
-              Welcome back{user.fullName ? `, ${user.fullName}` : ""}
-            </h1>
-            <p className="text-slate-500 text-sm mt-1">Here&apos;s how your listings are performing</p>
-          </div>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 px-5 py-2.5 btn-gradient text-white font-semibold rounded-xl text-sm shadow-lg shadow-cyan-700/20"
-          >
-            <Plus className="w-4 h-4" />
-            Analyze New Listing
-          </Link>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-slate-900 tracking-tight">My Listings</h1>
+          <p className="text-sm text-slate-400 mt-1">{analyses.length > 0 ? `${analyses.length} listing${analyses.length === 1 ? "" : "s"} tracked` : "Track and optimize your tour listings"}</p>
         </div>
+        <button
+          onClick={handleNewListing}
+          className="inline-flex items-center gap-2 px-5 py-2.5 btn-gradient text-white font-semibold rounded-xl text-sm shadow-lg shadow-cyan-700/20"
+        >
+          <Plus className="w-4 h-4" />
+          Analyze New Listing
+        </button>
+      </div>
 
-        {/* Stats cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {/* Stats */}
+      {analyses.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: "Average Score", value: avgScore.toString(), icon: Target, color: avgScore >= 60 ? "text-emerald-600" : "text-amber-600" },
-            { label: "Listings Tracked", value: mockListings.length.toString(), icon: BarChart3, color: "text-cyan-700" },
-            { label: "Completed Analyses", value: completedCount.toString(), icon: CheckCircle2, color: "text-emerald-600" },
-            { label: "Needs Attention", value: needsWorkCount.toString(), icon: AlertCircle, color: needsWorkCount > 0 ? "text-red-500" : "text-slate-400" },
-          ].map((stat, i) => (
-            <div key={i} className="bg-white rounded-xl border border-slate-200 p-5">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs text-slate-400 uppercase tracking-wider font-medium">{stat.label}</span>
-                <stat.icon className={`w-4 h-4 ${stat.color}`} />
-              </div>
-              <span className={`text-3xl font-mono font-bold ${stat.color}`}>{stat.value}</span>
+            { label: "Total Listings", value: analyses.length, color: "text-slate-900" },
+            { label: "Avg Score", value: avgScore !== null ? avgScore : "\u2014", color: scoreAccent(avgScore) },
+            { label: "Completed", value: completed.length, color: "text-emerald-600" },
+            { label: "Needs Work", value: needsWork, color: needsWork > 0 ? "text-red-600" : "text-slate-400" },
+          ].map((stat) => (
+            <div key={stat.label} className="bg-white rounded-xl border border-slate-200 p-5">
+              <p className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">{stat.label}</p>
+              <p className={`text-2xl font-mono font-bold mt-1 ${stat.color}`}>{stat.value}</p>
             </div>
           ))}
         </div>
+      )}
 
-        <div className="grid lg:grid-cols-[1fr_380px] gap-6">
-          {/* Listings */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-slate-900">Your Listings</h2>
-              <span className="text-xs text-slate-400">{mockListings.length} listings</span>
-            </div>
+      {/* Content */}
+      {loading ? (
+        <div className="flex items-center justify-center py-32">
+          <Loader2 className="w-6 h-6 text-cyan-700 animate-spin" />
+        </div>
+      ) : analyses.length === 0 ? (
+        /* Empty state */
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-24"
+        >
+          <div className="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-6">
+            <BarChart3 className="w-8 h-8 text-slate-300" />
+          </div>
+          <h3 className="text-xl font-display font-bold text-slate-900 mb-2">No listings analyzed yet</h3>
+          <p className="text-slate-500 mb-8 max-w-sm mx-auto">Add your listing URL to get your first optimization report</p>
+          <button
+            onClick={handleNewListing}
+            className="inline-flex items-center gap-2 px-6 py-3 btn-gradient text-white font-semibold rounded-xl text-sm shadow-lg shadow-cyan-700/20"
+          >
+            <Plus className="w-4 h-4" />
+            Analyze your first listing
+          </button>
+        </motion.div>
+      ) : (
+        /* Listing cards */
+        <div className="space-y-3">
+          {analyses.map((item, i) => (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              onClick={() => router.push(`/dashboard/listings/${item.id}`)}
+              className="bg-white rounded-xl border border-slate-200 p-5 cursor-pointer hover:shadow-md hover:border-slate-300 transition-all group"
+            >
+              <div className="flex items-start gap-4">
+                {/* Score or spinner */}
+                {item.status === "processing" || item.status === "pending" ? (
+                  <div className="w-12 h-12 rounded-xl bg-sky-50 ring-1 ring-sky-200 flex items-center justify-center flex-shrink-0">
+                    <div className="relative">
+                      <Loader2 className="w-5 h-5 text-sky-500 animate-spin" />
+                      {item.progress && (
+                        <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-mono text-sky-600 whitespace-nowrap">
+                          {item.progress.percent}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <ScoreBadge score={item.overallScore} />
+                )}
 
-            <div className="space-y-3">
-              {mockListings.map((listing) => (
-                <div
-                  key={listing.id}
-                  className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md hover:border-slate-300 transition-all group"
-                >
-                  <div className="flex items-start justify-between gap-4 mb-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-slate-900 font-semibold truncate">{listing.title}</h3>
-                        {listing.status === "processing" && (
-                          <span className="flex items-center gap-1 text-xs text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded-full flex-shrink-0">
-                            <Clock className="w-3 h-3 animate-spin" />
-                            Processing
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-slate-400">
-                        <span className="font-mono">{listing.productCode}</span>
-                        <span>Analyzed {listing.lastAnalyzed}</span>
-                      </div>
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold text-slate-900 truncate group-hover:text-cyan-700 transition-colors">
+                        {item.productTitle || item.viatorProductCode}
+                      </h3>
+                      <p className="text-xs text-slate-400 font-mono mt-0.5">{item.viatorProductCode}</p>
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
-                      <ScoreChange current={listing.score} prev={listing.prevScore} />
-                      <ScoreBadge score={listing.score} />
+                      <StatusBadge status={item.status} />
+                      <span className="text-xs text-slate-400 hidden sm:block">{timeAgo(item.createdAt)}</span>
                     </div>
                   </div>
 
-                  {listing.scores && (
-                    <div className="space-y-2 mb-4">
-                      <MiniBar label="Title" value={listing.scores.title} />
-                      <MiniBar label="Description" value={listing.scores.description} />
-                      <MiniBar label="Pricing" value={listing.scores.pricing} />
-                      <MiniBar label="Reviews" value={listing.scores.reviews} />
-                      <MiniBar label="Photos" value={listing.scores.photos} />
-                      <MiniBar label="Completeness" value={listing.scores.completeness} />
+                  {/* Progress bar for processing */}
+                  {(item.status === "processing" || item.status === "pending") && item.progress && (
+                    <div className="mt-3">
+                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <motion.div
+                          className="h-full bg-sky-500 rounded-full"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${item.progress.percent}%` }}
+                          transition={{ duration: 0.5 }}
+                        />
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-1.5">{item.progress.message}</p>
                     </div>
                   )}
 
-                  {listing.topRecommendation && (
-                    <div className="flex items-start gap-2 p-3 bg-slate-50 rounded-lg border border-slate-100 mb-3">
-                      <Sparkles className="w-3.5 h-3.5 text-cyan-600 flex-shrink-0 mt-0.5" />
-                      <p className="text-xs text-slate-600">{listing.topRecommendation}</p>
+                  {/* Score bars for completed */}
+                  {item.status === "completed" && item.scores && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1.5 mt-3">
+                      <CategoryBar label="Title" score={item.scores.title} />
+                      <CategoryBar label="Description" score={item.scores.description} />
+                      <CategoryBar label="Pricing" score={item.scores.pricing} />
+                      <CategoryBar label="Reviews" score={item.scores.reviews} />
+                      <CategoryBar label="Photos" score={item.scores.photos} />
+                      <CategoryBar label="Complete" score={item.scores.completeness} />
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                    <Link
-                      href={`/report/${listing.id}`}
-                      className="text-xs text-cyan-700 hover:text-cyan-800 font-medium flex items-center gap-1"
-                    >
-                      View Full Report
-                      <ChevronRight className="w-3 h-3" />
-                    </Link>
-                    <a
-                      href={`https://www.viator.com/tours/${listing.productCode}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1"
-                    >
-                      Viator <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
+                  {/* Failed */}
+                  {item.status === "failed" && (
+                    <p className="text-xs text-red-500 mt-2">Analysis failed. Try again.</p>
+                  )}
                 </div>
-              ))}
-            </div>
-          </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Recent Activity */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="font-bold text-slate-900 mb-4">Recent Activity</h3>
-              <div className="space-y-4">
-                {mockActivity.map((item, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${
-                      item.type === "success" ? "bg-emerald-500" :
-                      item.type === "improvement" ? "bg-cyan-500" :
-                      "bg-violet-500"
-                    }`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-slate-900 font-medium">{item.action}</p>
-                      <p className="text-xs text-slate-400 truncate">{item.listing}</p>
-                      <p className="text-xs text-slate-300 mt-0.5">{item.time}</p>
-                    </div>
-                  </div>
-                ))}
+                {/* Arrow */}
+                <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-cyan-700 transition-colors flex-shrink-0 mt-1 hidden sm:block" />
               </div>
-            </div>
-
-            {/* Quick Tips */}
-            <div className="bg-gradient-to-br from-cyan-50 to-violet-50 rounded-xl border border-slate-200 p-6">
-              <h3 className="font-bold text-slate-900 mb-3">Quick Tips</h3>
-              <div className="space-y-3">
-                {[
-                  "Re-analyze listings monthly to track score changes",
-                  "Focus on your lowest-scoring dimension first",
-                  "Check competitor reviews for quick-win ideas",
-                ].map((tip, i) => (
-                  <div key={i} className="flex items-start gap-2 text-sm">
-                    <Star className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-slate-600">{tip}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Score Legend */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="font-bold text-slate-900 mb-3">Score Guide</h3>
-              <div className="space-y-2">
-                {[
-                  { range: "80-100", label: "Excellent", color: "bg-emerald-500" },
-                  { range: "60-79", label: "Good", color: "bg-amber-500" },
-                  { range: "40-59", label: "Needs Work", color: "bg-orange-500" },
-                  { range: "0-39", label: "Critical", color: "bg-red-500" },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3 text-sm">
-                    <div className={`w-3 h-3 rounded-full ${item.color}`} />
-                    <span className="font-mono text-slate-500 w-14">{item.range}</span>
-                    <span className="text-slate-600">{item.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+            </motion.div>
+          ))}
         </div>
-      </div>
+      )}
     </div>
   );
 }

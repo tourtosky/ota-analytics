@@ -7,6 +7,10 @@ import { fetchReviews } from "@/lib/viator/reviews";
 import { calculateScores } from "@/lib/analysis/scoring";
 import { mergeProductData } from "@/lib/scraping/merge";
 import { logAdminEvent } from "@/lib/admin/events";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getOrCreateProfile } from "@/lib/auth/roles";
+import { PLAN_LIMITS } from "@/lib/plans";
+import { count } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,12 +24,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get current user (optional — public analyses are allowed)
+    let userId: string | undefined;
+    try {
+      const supabase = await createServerSupabaseClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        userId = user.id;
+
+        // Enforce plan limits for authenticated users
+        const profile = await getOrCreateProfile(user.id, user.email);
+        const limit = PLAN_LIMITS[profile.plan as keyof typeof PLAN_LIMITS] ?? PLAN_LIMITS.free;
+
+        if (limit !== Infinity) {
+          const [result] = await db
+            .select({ count: count() })
+            .from(analyses)
+            .where(eq(analyses.userId, user.id));
+
+          if ((result?.count ?? 0) >= limit) {
+            return NextResponse.json(
+              { error: "plan_limit_reached", plan: profile.plan, limit },
+              { status: 403 }
+            );
+          }
+        }
+      }
+    } catch { /* unauthenticated — OK */ }
+
     // Create initial analysis record
     const [analysis] = await db
       .insert(analyses)
       .values({
         viatorProductCode: productCode,
         status: "processing",
+        userId: userId,
       })
       .returning();
 

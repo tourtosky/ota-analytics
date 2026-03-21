@@ -16,6 +16,7 @@ export async function GET() {
     id: user.id,
     email: user.email,
     role: profile.role,
+    plan: profile.plan,
     fullName: profile.fullName,
     companyName: profile.companyName,
   });
