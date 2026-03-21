@@ -9,11 +9,11 @@ export async function GET() {
   if (!auth.authorized) return auth.response;
 
   try {
-    // Query profiles with analysis count per user
     const clients = await db
       .select({
         id: profiles.id,
         role: profiles.role,
+        plan: profiles.plan,
         fullName: profiles.fullName,
         companyName: profiles.companyName,
         createdAt: profiles.createdAt,
@@ -29,21 +29,40 @@ export async function GET() {
   }
 }
 
+const VALID_ROLES = ["admin", "client"];
+const VALID_PLANS = ["free", "growth", "pro"];
+
 export async function PATCH(request: NextRequest) {
   const auth = await requireAdmin();
   if (!auth.authorized) return auth.response;
 
   try {
     const body = await request.json();
-    const { userId, role } = body;
+    const { userId, role, plan } = body;
 
-    if (!userId || !["admin", "client"].includes(role)) {
-      return NextResponse.json({ error: "Invalid userId or role" }, { status: 400 });
+    if (!userId) {
+      return NextResponse.json({ error: "userId is required" }, { status: 400 });
     }
+
+    if (role !== undefined && !VALID_ROLES.includes(role)) {
+      return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+    }
+
+    if (plan !== undefined && !VALID_PLANS.includes(plan)) {
+      return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+    }
+
+    if (role === undefined && plan === undefined) {
+      return NextResponse.json({ error: "Provide role or plan to update" }, { status: 400 });
+    }
+
+    const updateData: Record<string, string> = {};
+    if (role !== undefined) updateData.role = role;
+    if (plan !== undefined) updateData.plan = plan;
 
     const [updated] = await db
       .update(profiles)
-      .set({ role })
+      .set(updateData)
       .where(eq(profiles.id, userId))
       .returning();
 

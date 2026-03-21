@@ -3,14 +3,23 @@
 import { useState, useEffect, useCallback } from "react";
 import { timeAgo } from "@/components/admin/helpers";
 
+type Plan = "free" | "growth" | "pro";
+
 interface Client {
   id: string;
   role: "admin" | "client";
+  plan: Plan;
   fullName: string | null;
   companyName: string | null;
   createdAt: string;
   analysisCount: number;
 }
+
+const planStyles: Record<Plan, string> = {
+  free: "bg-slate-500/10 adm-text-secondary ring-1 ring-slate-500/20",
+  growth: "bg-sky-500/10 text-sky-600 ring-1 ring-sky-500/20",
+  pro: "bg-violet-500/10 text-violet-600 ring-1 ring-violet-500/20",
+};
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
@@ -35,23 +44,30 @@ export default function ClientsPage() {
 
   useEffect(() => { fetchClients(); }, [fetchClients]);
 
-  const toggleRole = async (userId: string, currentRole: string) => {
-    const newRole = currentRole === "admin" ? "client" : "admin";
-    if (!confirm(`Change role to "${newRole}"?`)) return;
+  const updateClient = async (userId: string, patch: { role?: string; plan?: string }) => {
     setActionLoading(userId);
     try {
       const res = await fetch("/api/admin/clients", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, role: newRole }),
+        body: JSON.stringify({ userId, ...patch }),
       });
-      if (!res.ok) throw new Error("Failed to update role");
-      fetchClients();
+      if (!res.ok) throw new Error("Failed to update");
+      // Optimistic update
+      setClients((prev) => prev.map((c) =>
+        c.id === userId ? { ...c, ...patch } as Client : c
+      ));
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to update role");
+      alert(err instanceof Error ? err.message : "Failed to update");
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const toggleRole = async (userId: string, currentRole: string) => {
+    const newRole = currentRole === "admin" ? "client" : "admin";
+    if (!confirm(`Change role to "${newRole}"?`)) return;
+    await updateClient(userId, { role: newRole });
   };
 
   const filtered = clients.filter((c) => {
@@ -102,8 +118,8 @@ export default function ClientsPage() {
             <table className="w-full">
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--adm-border)" }}>
-                  {["Name", "Company", "Role", "Analyses", "Joined", "Actions"].map((h, i) => (
-                    <th key={h} className={`${i === 0 ? "text-left" : i === 4 ? "text-right" : "text-center"} px-4 py-3 text-[11px] uppercase tracking-wider adm-text-muted font-medium`}>{h}</th>
+                  {["Name", "Company", "Role", "Plan", "Analyses", "Joined", "Actions"].map((h, i) => (
+                    <th key={h} className={`${i === 0 ? "text-left" : i === 5 ? "text-right" : "text-center"} px-4 py-3 text-[11px] uppercase tracking-wider adm-text-muted font-medium`}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -123,6 +139,18 @@ export default function ClientsPage() {
                       }`}>
                         {client.role}
                       </span>
+                    </td>
+                    <td className="text-center px-4 py-3">
+                      <select
+                        value={client.plan}
+                        onChange={(e) => updateClient(client.id, { plan: e.target.value })}
+                        disabled={actionLoading === client.id}
+                        className={`appearance-none cursor-pointer px-2.5 py-0.5 rounded-full text-[11px] font-medium border-0 outline-none text-center disabled:opacity-30 ${planStyles[client.plan]}`}
+                      >
+                        <option value="free">free</option>
+                        <option value="growth">growth</option>
+                        <option value="pro">pro</option>
+                      </select>
                     </td>
                     <td className="text-center px-4 py-3 text-sm adm-text-secondary font-mono">{client.analysisCount}</td>
                     <td className="text-right px-4 py-3 text-xs adm-text-muted">{timeAgo(client.createdAt)}</td>

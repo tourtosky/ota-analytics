@@ -5,11 +5,19 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { LayoutDashboard, BarChart3, Settings, LogOut, Menu, X } from "lucide-react";
+import { PLAN_LABELS, type Plan } from "@/lib/plans";
 
 interface UserInfo {
   email: string;
   fullName: string | null;
+  plan: Plan;
 }
+
+const planBadgeStyles: Record<Plan, string> = {
+  free: "bg-slate-100 text-slate-500",
+  growth: "bg-cyan-50 text-cyan-700 ring-1 ring-cyan-200",
+  pro: "bg-violet-50 text-violet-600 ring-1 ring-violet-200",
+};
 
 const nav = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -27,7 +35,7 @@ export default function Sidebar() {
     fetch("/api/auth/me")
       .then((r) => r.json())
       .then((data) => {
-        if (!data.error) setUser({ email: data.email, fullName: data.fullName });
+        if (!data.error) setUser({ email: data.email, fullName: data.fullName, plan: data.plan || "free" });
       });
   }, []);
 
@@ -80,15 +88,20 @@ export default function Sidebar() {
       {/* User */}
       {user && (
         <div className="p-4 border-t border-slate-200 flex-shrink-0">
-          <div className="flex items-center gap-3 mb-3">
+          <Link href="/dashboard/settings" onClick={() => setOpen(false)} className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer mb-2">
             <div className="w-9 h-9 rounded-xl bg-cyan-50 text-cyan-700 font-bold text-sm flex items-center justify-center flex-shrink-0">
               {initials}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium text-slate-900 truncate">{user.fullName || "User"}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium text-slate-900 truncate">{user.fullName || "User"}</p>
+                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium flex-shrink-0 ${planBadgeStyles[user.plan]}`}>
+                  {PLAN_LABELS[user.plan]}
+                </span>
+              </div>
               <p className="text-xs text-slate-400 truncate">{user.email}</p>
             </div>
-          </div>
+          </Link>
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-500 hover:text-red-500 hover:bg-red-50 transition-colors"
