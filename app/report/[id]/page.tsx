@@ -10,9 +10,10 @@ import { Analysis } from "@/lib/db/schema";
 import { Loader2, ExternalLink, ArrowLeft, Lock, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import RegisterModal from "@/components/RegisterModal";
 
 /* ═══ Blurred lock overlay for premium sections ═══ */
-function LockedSection({ title, children }: { title: string; children: React.ReactNode }) {
+function LockedSection({ title, children, onUnlock }: { title: string; children: React.ReactNode; onUnlock: () => void }) {
   return (
     <div className="relative rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
       {/* Blurred placeholder content */}
@@ -29,7 +30,7 @@ function LockedSection({ title, children }: { title: string; children: React.Rea
           <p className="text-sm text-slate-500 mb-5 max-w-xs mx-auto">
             Upgrade to Pro to unlock AI-powered insights and actionable recommendations
           </p>
-          <button className="inline-flex items-center gap-2 px-6 py-3 btn-gradient text-white font-semibold rounded-xl text-sm shadow-lg shadow-cyan-700/20">
+          <button onClick={onUnlock} className="inline-flex items-center gap-2 px-6 py-3 btn-gradient text-white font-semibold rounded-xl text-sm shadow-lg shadow-cyan-700/20">
             <Sparkles className="w-4 h-4" />
             Unlock Full Report
           </button>
@@ -70,6 +71,7 @@ export default function ReportPage({
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showRegister, setShowRegister] = useState(false);
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
@@ -188,6 +190,12 @@ export default function ReportPage({
 
   return (
     <main className="min-h-screen bg-slate-50">
+      <RegisterModal
+        open={showRegister}
+        onClose={() => setShowRegister(false)}
+        heading="Unlock AI Insights"
+        subheading="Create a free account to access AI-powered recommendations and review analysis"
+      />
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-2xl border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -251,7 +259,7 @@ export default function ReportPage({
           {hasRecommendations ? (
             <Recommendations recommendations={recommendations} />
           ) : (
-            <LockedSection title="AI-Powered Recommendations">
+            <LockedSection title="AI-Powered Recommendations" onUnlock={() => setShowRegister(true)}>
               <Recommendations recommendations={fakeRecommendations} />
             </LockedSection>
           )}
@@ -262,7 +270,7 @@ export default function ReportPage({
           {hasReviewInsights ? (
             <ReviewInsights insights={reviewInsights} />
           ) : (
-            <LockedSection title="Review Insights & Sentiment Analysis">
+            <LockedSection title="Review Insights & Sentiment Analysis" onUnlock={() => setShowRegister(true)}>
               <ReviewInsights insights={fakeReviewInsights} />
             </LockedSection>
           )}

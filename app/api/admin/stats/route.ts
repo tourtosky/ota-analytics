@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { analyses, adminEvents } from "@/lib/db/schema";
 import { eq, sql, and, gte, ilike, desc, count } from "drizzle-orm";
+import { requireAdmin } from "@/lib/auth/admin-guard";
 
 const PAGE_SIZE = 20;
 
@@ -23,6 +24,9 @@ function getTimeRangeStart(range: string): Date | null {
 }
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
+
   try {
   const searchParams = request.nextUrl.searchParams;
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));

@@ -25,7 +25,7 @@ export default function AnalyzeForm() {
 
     const productCode = extractProductCode(url.trim());
     if (!productCode) {
-      setError("Please enter a valid Viator product URL or product code");
+      setError("Please enter a valid listing URL or product code");
       return;
     }
 
@@ -61,7 +61,7 @@ export default function AnalyzeForm() {
             onChange={(e) => setUrl(e.target.value)}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            placeholder="Paste your Viator listing URL..."
+            placeholder="Paste your listing URL..."
             className="flex-1 px-5 py-4 rounded-xl text-base bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white transition-all"
             disabled={loading}
           />

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import AnalyzeForm from "@/components/AnalyzeForm";
+import RegisterModal from "@/components/RegisterModal";
 import { motion, useInView, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
@@ -67,9 +68,11 @@ export default function Home() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
   const heroY = useTransform(scrollYProgress, [0, 0.5], [0, -60]);
+  const [showRegister, setShowRegister] = useState(false);
 
   return (
     <main className="bg-white text-slate-900 selection:bg-cyan-100">
+      <RegisterModal open={showRegister} onClose={() => setShowRegister(false)} />
 
       {/* ═══════════ NAV ═══════════ */}
       <nav className="fixed top-0 w-full z-50 px-6">
@@ -79,8 +82,9 @@ export default function Home() {
           </span>
           <div className="flex items-center gap-6 text-sm">
             <a href="#features" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">Features</a>
+            <a href="/pricing" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">Pricing</a>
             <a href="#faq" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">FAQ</a>
-            <a href="#cta" className="px-4 py-1.5 rounded-lg btn-gradient text-white text-sm font-medium transition-all shadow-sm">
+            <a href="/pricing" className="px-4 py-1.5 rounded-lg btn-gradient text-white text-sm font-medium transition-all shadow-sm">
               Try Free
             </a>
           </div>
@@ -100,7 +104,7 @@ export default function Home() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }} className="mb-6">
                 <span className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-cyan-700/80 font-medium">
                   <span className="w-6 h-px bg-cyan-700/30" />
-                  Viator listing intelligence
+                  Tour listing intelligence
                 </span>
               </motion.div>
 
@@ -123,7 +127,7 @@ export default function Home() {
                 transition={{ duration: 0.7, delay: 0.25 }}
                 className="text-lg text-slate-500 leading-relaxed mb-10 max-w-lg"
               >
-                Paste your Viator URL. In 30 seconds, see how you compare to
+                Paste your listing URL. In 30 seconds, see how you compare to
                 the top 10 competitors — and exactly what to change.
               </motion.p>
 
@@ -223,7 +227,7 @@ export default function Home() {
           >
             <p className="text-sm text-cyan-700/80 uppercase tracking-[0.2em] font-medium mb-4">The problem</p>
             <h2 className="text-3xl md:text-5xl font-display font-bold leading-tight tracking-tight text-slate-900">
-              300,000 tours on Viator.<br />
+              300,000+ tours listed online.<br />
               Yours is <span className="text-red-500">invisible</span>.
             </h2>
             <p className="mt-6 text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">
@@ -259,7 +263,7 @@ export default function Home() {
             viewport={{ once: true }}
             className="text-center mt-8 text-slate-400 text-sm"
           >
-            Real data from a Viator listing audit. This could be yours.
+            Real data from a listing audit. This could be yours.
           </motion.p>
         </div>
       </section>
@@ -283,8 +287,8 @@ export default function Home() {
             {[
               {
                 num: "01",
-                title: "Paste your Viator URL",
-                desc: "We extract your product code and pull your full listing via the official API — title, description, pricing, photos, reviews, everything.",
+                title: "Paste your listing URL",
+                desc: "We extract your listing and pull every detail — title, description, pricing, photos, reviews, everything.",
               },
               {
                 num: "02",
@@ -294,7 +298,7 @@ export default function Home() {
               {
                 num: "03",
                 title: "AI generates your playbook",
-                desc: "Claude analyzes the gap between you and the top performers. You get a 0-100 score across 6 dimensions and prioritized, specific recommendations.",
+                desc: "Our AI analyzes the gap between you and the top performers. You get a 0-100 score across 6 dimensions and prioritized, specific recommendations.",
               },
             ].map((step, i) => (
               <motion.div
@@ -378,7 +382,7 @@ export default function Home() {
               className="lg:row-span-2 rounded-2xl border border-slate-200 bg-gradient-to-b from-violet-50/60 to-white p-8 hover:shadow-lg hover:border-slate-300 transition-all"
             >
               <p className="text-xs text-violet-600/80 uppercase tracking-wider font-medium mb-3">AI Engine</p>
-              <h3 className="text-2xl font-bold text-slate-900 mb-3">Powered by Claude</h3>
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">Powered by AI</h3>
               <p className="text-slate-500 leading-relaxed mb-8">
                 Not generic tips. AI reads your listing, your competitors&apos; reviews, and the gap data —
                 then writes recommendations you can copy-paste into your listing today.
@@ -482,11 +486,11 @@ export default function Home() {
           </motion.div>
 
           <FAQ q="Is this really free?" a="Yes. Your first analysis is completely free. No credit card, no signup, no tricks. We want you to see the value before anything else." />
-          <FAQ q="How does TourBoost work?" a="We use the official Viator API to pull your listing data and the top 10 competitors in your destination and category. Our AI analyzes every gap and generates specific, actionable fixes." />
+          <FAQ q="How does TourBoost work?" a="We pull your listing data and the top 10 competitors in your destination and category. Our AI analyzes every gap and generates specific, actionable fixes." />
           <FAQ q="What do you analyze?" a="Six dimensions: title quality, description depth, pricing competitiveness, review performance, photo count, and listing completeness (inclusions, exclusions, itinerary, cancellation policy). Each scored 0-100." />
-          <FAQ q="Do I need a Viator account?" a="No. You just need the URL of your listing on Viator. That's it." />
+          <FAQ q="Do I need an account on the platform?" a="No. You just need the URL of your listing. That's it." />
           <FAQ q="How long does it take?" a="About 30 seconds. We fetch data, run the competitor comparison, and generate AI recommendations in real-time." />
-          <FAQ q="Will you support other platforms?" a="GetYourGuide, Airbnb Experiences, and more are on the roadmap. Starting with Viator where the data is richest." />
+          <FAQ q="Will you support other platforms?" a="GetYourGuide, Airbnb Experiences, and more are on the roadmap. We're expanding platform support continuously." />
         </div>
       </section>
 
@@ -501,6 +505,7 @@ export default function Home() {
           </div>
           <div className="flex gap-8 text-sm text-slate-400">
             <a href="mailto:hello@tourboost.app" className="hover:text-slate-900 transition-colors">Contact</a>
+            <a href="/pricing" className="hover:text-slate-900 transition-colors">Pricing</a>
             <a href="#" className="hover:text-slate-900 transition-colors">Privacy</a>
           </div>
         </div>

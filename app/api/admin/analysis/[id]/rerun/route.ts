@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { analyses } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { requireAdmin } from "@/lib/auth/admin-guard";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
+
   try {
     const { id } = await params;
 

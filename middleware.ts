@@ -4,18 +4,17 @@ import { updateSession } from "@/lib/supabase/middleware";
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const isAdminRoute = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
-  const isDashboardRoute = pathname.startsWith("/dashboard") || pathname.startsWith("/api/dashboard");
+  const isProtectedRoute = pathname.startsWith("/admin") || pathname.startsWith("/api/admin")
+    || pathname.startsWith("/dashboard") || pathname.startsWith("/api/dashboard");
   const isLoginPage = pathname === "/login";
-  const isAdminLogin = pathname === "/admin/login";
 
   // Public routes — no auth needed
-  if (!isAdminRoute && !isDashboardRoute && !isLoginPage) {
+  if (!isProtectedRoute && !isLoginPage) {
     return NextResponse.next();
   }
 
-  // Login pages are accessible without auth
-  if (isLoginPage || isAdminLogin) {
+  // Login page is accessible without auth
+  if (isLoginPage) {
     return NextResponse.next();
   }
 
