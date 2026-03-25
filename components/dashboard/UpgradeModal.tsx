@@ -1,6 +1,7 @@
 "use client";
 
-import { X, Lock, Check } from "lucide-react";
+import { useState } from "react";
+import { X, Lock, Check, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import type { Plan } from "@/lib/plans";
@@ -37,9 +38,30 @@ interface UpgradeModalProps {
 }
 
 export default function UpgradeModal({ open, onClose, plan }: UpgradeModalProps) {
+  const [subscribing, setSubscribing] = useState(false);
   const upgrade = UPGRADE_FEATURES[plan] || UPGRADE_FEATURES.free;
   const limit = PLAN_LIMITS[plan];
   const limitText = limit === Infinity ? "" : `${limit} listing${limit === 1 ? "" : "s"}`;
+
+  const targetPlan = plan === "free" ? "growth" : "pro";
+
+  const handleSubscribe = async () => {
+    setSubscribing(true);
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: targetPlan, interval: "monthly" }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error("Checkout error:", err);
+      setSubscribing(false);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -90,12 +112,23 @@ export default function UpgradeModal({ open, onClose, plan }: UpgradeModalProps)
 
             {/* Actions */}
             <div className="px-8 pb-8 space-y-3">
+              <button
+                onClick={handleSubscribe}
+                disabled={subscribing}
+                className="block w-full text-center py-3 btn-gradient text-white font-semibold rounded-xl text-sm shadow-lg shadow-cyan-700/20 disabled:opacity-60 inline-flex items-center justify-center gap-2"
+              >
+                {subscribing ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Redirecting...</>
+                ) : (
+                  `Subscribe to ${targetPlan === "growth" ? "Growth" : "Pro"} →`
+                )}
+              </button>
               <Link
                 href="/pricing"
                 onClick={onClose}
-                className="block w-full text-center py-3 btn-gradient text-white font-semibold rounded-xl text-sm shadow-lg shadow-cyan-700/20"
+                className="block w-full text-center py-2.5 text-sm text-slate-500 hover:text-slate-700 transition-colors"
               >
-                View Pricing Plans &rarr;
+                Compare all plans
               </Link>
               <button
                 onClick={onClose}

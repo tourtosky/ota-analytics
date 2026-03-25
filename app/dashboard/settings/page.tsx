@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, X, Loader2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Check, X, Loader2, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { PLAN_LIMITS, PLAN_LABELS, type Plan } from "@/lib/plans";
 import { PLAN_FEATURES } from "@/lib/plan-features";
@@ -31,6 +32,11 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved" | "error">("idle");
 
+  // Stripe state
+  const [managing, setManaging] = useState(false);
+  const [checkoutSuccess, setCheckoutSuccess] = useState(false);
+  const searchParams = useSearchParams();
+
   useEffect(() => {
     Promise.all([
       fetch("/api/dashboard/profile").then((r) => r.json()),
@@ -45,6 +51,38 @@ export default function SettingsPage() {
       setLoading(false);
     });
   }, []);
+
+  // Handle checkout success return
+  useEffect(() => {
+    if (searchParams.get("session_id")) {
+      setCheckoutSuccess(true);
+      // Re-fetch profile to get updated plan
+      fetch("/api/dashboard/profile").then((r) => r.json()).then((data) => {
+        if (!data.error) {
+          setProfile(data);
+          setFullName(data.fullName || "");
+          setCompanyName(data.companyName || "");
+        }
+      });
+      // Clear the URL param without reload
+      window.history.replaceState({}, "", "/dashboard/settings");
+    }
+  }, [searchParams]);
+
+  const handleManageSubscription = async () => {
+    setManaging(true);
+    try {
+      const res = await fetch("/api/stripe/portal", { method: "POST" });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error("Portal error:", err);
+    } finally {
+      setManaging(false);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,6 +129,20 @@ export default function SettingsPage() {
       <p className="text-sm text-slate-400 mb-8">Manage your account and plan</p>
 
       <div className="max-w-2xl space-y-6">
+        {/* ═══ Checkout Success Banner ═══ */}
+        {checkoutSuccess && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3">
+            <Check className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-emerald-800">Subscription activated!</p>
+              <p className="text-xs text-emerald-600">Your plan has been upgraded. Enjoy your new features!</p>
+            </div>
+            <button onClick={() => setCheckoutSuccess(false)} className="ml-auto text-emerald-400 hover:text-emerald-600">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* ═══ Account ═══ */}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-5">Account</h2>
@@ -158,14 +210,26 @@ export default function SettingsPage() {
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">Current Plan</h2>
-            {plan !== "pro" && (
-              <Link
-                href="/pricing"
-                className="text-sm font-medium text-cyan-700 hover:text-cyan-800 transition-colors"
-              >
-                Upgrade &rarr;
-              </Link>
-            )}
+            <div className="flex items-center gap-3">
+              {plan !== "free" && (
+                <button
+                  onClick={handleManageSubscription}
+                  disabled={managing}
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-800 border border-slate-200 rounded-lg px-3 py-1.5 transition-colors disabled:opacity-50"
+                >
+                  {managing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ExternalLink className="w-3.5 h-3.5" />}
+                  Manage Subscription
+                </button>
+              )}
+              {plan !== "pro" && (
+                <Link
+                  href="/pricing"
+                  className="text-sm font-medium text-cyan-700 hover:text-cyan-800 transition-colors"
+                >
+                  Upgrade &rarr;
+                </Link>
+              )}
+            </div>
           </div>
 
           {/* Plan badge */}

@@ -73,6 +73,46 @@ function FeatureCategory({ label }: { label: string }) {
 export default function PricingPage() {
   const [annual, setAnnual] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  const handleSubscribe = async (plan: "growth" | "pro") => {
+    setLoadingPlan(plan);
+    setCheckoutError(null);
+    try {
+      const authRes = await fetch("/api/auth/me");
+      if (!authRes.ok) {
+        setShowRegister(true);
+        setLoadingPlan(null);
+        return;
+      }
+
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan,
+          interval: annual ? "yearly" : "monthly",
+        }),
+      });
+
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        throw new Error("Server error — please restart the dev server and try again.");
+      }
+
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || "Failed to create checkout");
+      }
+    } catch (err) {
+      console.error("Checkout error:", err);
+      setCheckoutError("Something went wrong. Please try again.");
+      setLoadingPlan(null);
+    }
+  };
 
   const plans = [
     {
@@ -216,6 +256,10 @@ export default function PricingPage() {
               </span>
             </button>
           </div>
+
+          {checkoutError && (
+            <p className="mt-4 text-sm text-red-500 font-medium">{checkoutError}</p>
+          )}
         </motion.div>
       </section>
 
@@ -292,10 +336,11 @@ export default function PricingPage() {
                       </Link>
                     ) : (
                       <button
-                        onClick={() => setShowRegister(true)}
-                        className={`block w-full text-center py-3.5 rounded-xl text-sm font-semibold transition-all ${plan.ctaStyle}`}
+                        onClick={() => handleSubscribe(plan.name.toLowerCase() as "growth" | "pro")}
+                        disabled={loadingPlan === plan.name.toLowerCase()}
+                        className={`block w-full text-center py-3.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-60 ${plan.ctaStyle}`}
                       >
-                        {plan.cta}
+                        {loadingPlan === plan.name.toLowerCase() ? "Redirecting..." : plan.cta}
                       </button>
                     )}
 

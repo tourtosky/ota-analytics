@@ -10,6 +10,7 @@ export const profiles = pgTable("profiles", {
   plan: userPlanEnum("plan").default("free").notNull(),
   fullName: text("full_name"),
   companyName: text("company_name"),
+  stripeCustomerId: text("stripe_customer_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
