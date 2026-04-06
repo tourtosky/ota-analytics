@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import ScoreOverview from "@/components/ScoreOverview";
 import ScoreBreakdown from "@/components/ScoreBreakdown";
 import CompetitorTable from "@/components/CompetitorTable";
+import ListingsOverview from "@/components/ListingsOverview";
 import Recommendations from "@/components/Recommendations";
 import ReviewInsights from "@/components/ReviewInsights";
 import { Analysis } from "@/lib/db/schema";
-import { Loader2, ArrowLeft, ExternalLink, Share2, Check } from "lucide-react";
+import { Loader2, ArrowLeft, ExternalLink, Share2, Check, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -24,6 +25,7 @@ export default function ListingDetailPage({
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Get current user
   useEffect(() => {
@@ -75,6 +77,28 @@ export default function ListingDetailPage({
     await navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDelete = async () => {
+    const confirmed = window.confirm(
+      "Delete this listing report? This cannot be undone."
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/dashboard/analyses/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to delete");
+      }
+      router.push("/dashboard");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete");
+      setDeleting(false);
+    }
   };
 
   // Error state
@@ -153,6 +177,16 @@ export default function ListingDetailPage({
 
   const productData = analysis.productData as any;
   const competitorsData = analysis.competitorsData as any[];
+
+  // Build a working Viator product URL. Viator's router is slug-lenient —
+  // only d{destId}-{productCode} at the end needs to be correct.
+  const destRef = productData?.destinations?.[0]?.ref;
+  const titleSlug = (analysis.productTitle || "tour")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "tour";
+  const viatorUrl = destRef
+    ? `https://www.viator.com/tours/x/${titleSlug}/d${destRef}-${analysis.viatorProductCode}`
+    : `https://www.viator.com/search/${encodeURIComponent(analysis.viatorProductCode)}`;
   const recommendations = analysis.recommendations as any[];
   const reviewInsights = analysis.reviewInsights as any;
   const hasRecommendations = recommendations && recommendations.length > 0;
@@ -174,7 +208,7 @@ export default function ListingDetailPage({
             {analysis.productTitle || analysis.viatorProductCode}
           </h1>
           <a
-            href={`https://www.viator.com/tours/${analysis.viatorProductCode}`}
+            href={viatorUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-cyan-700 hover:text-cyan-800 transition-colors text-sm font-medium mt-1"
@@ -183,12 +217,23 @@ export default function ListingDetailPage({
           </a>
         </div>
 
-        <button
-          onClick={handleShare}
-          className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-600 hover:border-slate-300 hover:shadow-sm transition-all"
-        >
-          {copied ? <><Check className="w-4 h-4 text-emerald-500" /> Copied!</> : <><Share2 className="w-4 h-4" /> Share Report</>}
-        </button>
+        <div className="flex-shrink-0 flex items-center gap-2">
+          <button
+            onClick={handleShare}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-600 hover:border-slate-300 hover:shadow-sm transition-all"
+          >
+            {copied ? <><Check className="w-4 h-4 text-emerald-500" /> Copied!</> : <><Share2 className="w-4 h-4" /> Share Report</>}
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 bg-white text-sm font-medium text-red-600 hover:border-red-300 hover:bg-red-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Delete this listing"
+          >
+            {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            Delete
+          </button>
+        </div>
       </div>
 
       {/* Score Section */}
@@ -211,6 +256,13 @@ export default function ListingDetailPage({
           competitors={competitorsData || []}
         />
       </div>
+
+      {/* Listings Overview — public Viator category pages this product appears on */}
+      {analysis.listings && analysis.listings.length > 0 && (
+        <div className="mb-8">
+          <ListingsOverview listings={analysis.listings} />
+        </div>
+      )}
 
       {/* Recommendations */}
       {hasRecommendations && (

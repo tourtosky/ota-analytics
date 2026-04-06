@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import ScoreOverview from "@/components/ScoreOverview";
 import ScoreBreakdown from "@/components/ScoreBreakdown";
 import CompetitorTable from "@/components/CompetitorTable";
+import ListingsOverview from "@/components/ListingsOverview";
 import Recommendations from "@/components/Recommendations";
 import ReviewInsights from "@/components/ReviewInsights";
 import { Analysis } from "@/lib/db/schema";
@@ -186,7 +187,15 @@ export default function ReportPage({
   const hasRecommendations = recommendations && recommendations.length > 0;
   const hasReviewInsights = !!reviewInsights;
 
-  const viatorUrl = `https://www.viator.com/tours/${analysis.viatorProductCode}`;
+  // Build a working Viator product URL. Viator's router is slug-lenient —
+  // only d{destId}-{productCode} at the end needs to be correct.
+  const destRef = productData?.destinations?.[0]?.ref;
+  const titleSlug = (analysis.productTitle || "tour")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "tour";
+  const viatorUrl = destRef
+    ? `https://www.viator.com/tours/x/${titleSlug}/d${destRef}-${analysis.viatorProductCode}`
+    : `https://www.viator.com/search/${encodeURIComponent(analysis.viatorProductCode)}`;
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -253,6 +262,13 @@ export default function ReportPage({
             competitors={competitorsData || []}
           />
         </motion.div>
+
+        {/* Listings Overview — public Viator category pages this product appears on */}
+        {analysis.listings && analysis.listings.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.25 }} className="mb-8">
+            <ListingsOverview listings={analysis.listings} />
+          </motion.div>
+        )}
 
         {/* Recommendations — real or blurred */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="mb-8">

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { analyses } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { fetchProduct, searchCompetitors, formatCompetitorData, getSearchResultPrice, fetchProductPrice } from "@/lib/viator/products";
+import { discoverListings } from "@/lib/viator/discovery";
 import { fetchReviews } from "@/lib/viator/reviews";
 import { calculateScores } from "@/lib/analysis/scoring";
 import { mergeProductData } from "@/lib/scraping/merge";
@@ -164,7 +165,25 @@ async function processAnalysis(analysisId: string, productCode: string) {
     );
     const competitorReviews = competitorReviewsArrays.flat();
 
-    // 4. Calculate scores (API-only data, no scrape enrichment)
+    // 4. Discover all public Viator listings where this product appears.
+    // discoverListings is internally fault-tolerant; the try/catch here is a
+    // belt-and-suspenders guard so an unexpected bug in discovery never kills
+    // the whole analysis.
+    await updateProgress(analysisId, "discovering_listings", 70, "Finding every listing your tour appears on...");
+    const discoveryStart = Date.now();
+    let listings: Awaited<ReturnType<typeof discoverListings>> = [];
+    try {
+      listings = await discoverListings(product);
+      logAdminEvent("api_call", { service: "viator", endpoint: "listings_discovery", durationMs: Date.now() - discoveryStart });
+    } catch (err) {
+      logAdminEvent("listings_discovery_failed", {
+        analysisId,
+        productCode,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+
+    // 5. Calculate scores (API-only data, no scrape enrichment)
     await updateProgress(analysisId, "calculating_scores", 80, "Crunching the numbers...");
     const mergedProduct = mergeProductData(product, null); // API-only
     const scores = calculateScores(mergedProduct, competitors);
@@ -196,6 +215,7 @@ async function processAnalysis(analysisId: string, productCode: string) {
         },
         productData: mergedProduct as unknown as Record<string, unknown>,
         competitorsData: competitors as any,
+        listings,
         recommendations: null,
         reviewInsights: null,
         completedAt: new Date(),

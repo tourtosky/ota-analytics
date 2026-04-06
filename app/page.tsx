@@ -84,6 +84,7 @@ export default function Home() {
             <a href="#features" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">Features</a>
             <a href="/pricing" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">Pricing</a>
             <a href="#faq" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">FAQ</a>
+            <a href="/login" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">Login</a>
             <a href="/pricing" className="px-4 py-1.5 rounded-lg btn-gradient text-white text-sm font-medium transition-all shadow-sm">
               Try Free
             </a>

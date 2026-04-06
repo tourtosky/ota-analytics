@@ -111,6 +111,22 @@ export interface ViatorProductSearchResponse {
   totalCount: number;
 }
 
+/**
+ * A public Viator category-page listing on which a product may appear.
+ * URL format: https://www.viator.com/{destinationSlug}-tours/{tagSlug}/d{destinationId}-tag{tagId}
+ */
+export interface DiscoveredListing {
+  destinationId: string;
+  destinationName: string;
+  destinationSlug: string;
+  tagId: string;
+  tagName: string;
+  tagSlug: string;
+  url: string;
+  verified: boolean;
+  totalInListing?: number;
+}
+
 export interface ViatorReview {
   reviewId: string;
   rating: number;

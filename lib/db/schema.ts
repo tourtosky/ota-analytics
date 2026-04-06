@@ -1,5 +1,6 @@
 import { pgTable, uuid, varchar, text, integer, jsonb, timestamp, serial, index, pgEnum } from "drizzle-orm/pg-core";
 import { InferSelectModel, InferInsertModel } from "drizzle-orm";
+import type { DiscoveredListing } from "@/lib/viator/types";
 
 export const userRoleEnum = pgEnum("user_role", ["admin", "client"]);
 export const userPlanEnum = pgEnum("user_plan", ["free", "growth", "pro"]);
@@ -36,6 +37,7 @@ export const analyses = pgTable("analyses", {
   competitorsData: jsonb("competitors_data"),
   recommendations: jsonb("recommendations"),
   reviewInsights: jsonb("review_insights"),
+  listings: jsonb("listings").$type<DiscoveredListing[]>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),
   dataSource: varchar("data_source", { length: 20 }),
