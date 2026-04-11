@@ -71,7 +71,7 @@ export default function Home() {
   const [showRegister, setShowRegister] = useState(false);
 
   return (
-    <main className="bg-white text-slate-900 selection:bg-cyan-100">
+    <main className="bg-white text-slate-900 selection:bg-cyan-100 overflow-x-hidden">
       <RegisterModal open={showRegister} onClose={() => setShowRegister(false)} />
 
       {/* ═══════════ NAV ═══════════ */}
