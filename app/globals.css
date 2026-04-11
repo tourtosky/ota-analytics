@@ -9,7 +9,9 @@
   --color-surface: #f8fafc;
 
   --font-sans: var(--font-sans);
-  --font-display: var(--font-display);
+  /* Display font intentionally aliased to --font-sans (Space Grotesk) so all
+     headings and font-display utilities render in Space Grotesk. */
+  --font-display: var(--font-sans);
   --font-mono: var(--font-mono);
 }
 

@@ -1,15 +1,9 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Playfair_Display, JetBrains_Mono } from "next/font/google";
+import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const jakarta = Plus_Jakarta_Sans({
+const spaceGrotesk = Space_Grotesk({
   variable: "--font-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const playfair = Playfair_Display({
-  variable: "--font-display",
   subsets: ["latin"],
   display: "swap",
 });
@@ -32,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${jakarta.variable} ${playfair.variable} ${jetbrains.variable}`}>
+    <html lang="en" className={`${spaceGrotesk.variable} ${jetbrains.variable}`}>
       <body className="font-sans antialiased">
         {children}
       </body>

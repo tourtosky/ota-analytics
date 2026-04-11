@@ -93,16 +93,16 @@ export default function Home() {
       </nav>
 
       {/* ═══════════ HERO — split layout ═══════════ */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center overflow-hidden">
+      <section ref={heroRef} className="relative md:min-h-screen flex items-center overflow-hidden">
         {/* BG: soft radial tints */}
         <div className="absolute top-[-20%] right-[-10%] w-[700px] h-[700px] rounded-full bg-cyan-100/50 blur-[150px]" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-100/40 blur-[120px]" />
 
-        <motion.div style={{ opacity: heroOpacity, y: heroY }} className="relative z-10 max-w-6xl mx-auto px-6 w-full pt-28 pb-20">
+        <motion.div style={{ opacity: heroOpacity, y: heroY }} className="relative z-10 max-w-6xl mx-auto px-6 w-full pt-24 pb-16 md:pt-28 md:pb-20">
           <div className="grid lg:grid-cols-[1.1fr_1fr] gap-16 items-center">
             {/* Left: Copy */}
             <div>
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }} className="mb-6">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }} className="mb-5 md:mb-6">
                 <span className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-cyan-700/80 font-medium">
                   <span className="w-6 h-px bg-cyan-700/30" />
                   Tour listing intelligence
@@ -113,7 +113,7 @@ export default function Home() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.9, delay: 0.1 }}
-                className="text-[3.5rem] md:text-[4.5rem] leading-[1.05] font-display font-bold tracking-tight mb-8 text-slate-900"
+                className="text-[2.5rem] sm:text-[3.25rem] md:text-[4.5rem] leading-[1.05] font-display font-bold tracking-tight mb-6 md:mb-8 text-slate-900"
               >
                 Stop guessing.
                 <br />
@@ -126,7 +126,7 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.25 }}
-                className="text-lg text-slate-500 leading-relaxed mb-10 max-w-lg"
+                className="text-base md:text-lg text-slate-500 leading-relaxed mb-8 md:mb-10 max-w-lg"
               >
                 Paste your listing URL. In 30 seconds, see how you compare to
                 the top 10 competitors — and exactly what to change.
@@ -218,7 +218,7 @@ export default function Home() {
       </section>
 
       {/* ═══════════ PROBLEM STATEMENT ═══════════ */}
-      <section className="py-32 px-6 bg-slate-50">
+      <section className="py-20 md:py-32 px-6 bg-slate-50">
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0 }}
@@ -270,7 +270,7 @@ export default function Home() {
       </section>
 
       {/* ═══════════ HOW IT WORKS ═══════════ */}
-      <section className="py-32 px-6">
+      <section className="py-20 md:py-32 px-6">
         <div className="max-w-5xl mx-auto">
           <motion.div
             initial={{ opacity: 0 }}
@@ -324,7 +324,7 @@ export default function Home() {
       </section>
 
       {/* ═══════════ FEATURES — bento grid ═══════════ */}
-      <section id="features" className="py-32 px-6 bg-slate-50 relative">
+      <section id="features" className="py-20 md:py-32 px-6 bg-slate-50 relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-cyan-50 rounded-full blur-[150px]" />
 
         <div className="relative z-10 max-w-6xl mx-auto">
@@ -459,7 +459,7 @@ export default function Home() {
       </section>
 
       {/* ═══════════ CTA ═══════════ */}
-      <section id="cta" className="py-32 px-6 relative bg-slate-50">
+      <section id="cta" className="py-20 md:py-32 px-6 relative bg-slate-50">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-cyan-100/40 rounded-full blur-[150px]" />
 
         <motion.div
@@ -468,7 +468,7 @@ export default function Home() {
           viewport={{ once: true }}
           className="relative z-10 max-w-3xl mx-auto text-center"
         >
-          <h2 className="text-4xl md:text-6xl font-display font-bold tracking-tight mb-6 leading-tight text-slate-900">
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-display font-bold tracking-tight mb-6 leading-tight text-slate-900">
             Your competitors already<br />
             know their <span className="gradient-text">weak spots</span>.
           </h2>
@@ -480,7 +480,7 @@ export default function Home() {
       </section>
 
       {/* ═══════════ FAQ ═══════════ */}
-      <section id="faq" className="py-32 px-6">
+      <section id="faq" className="py-20 md:py-32 px-6">
         <div className="max-w-2xl mx-auto">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="mb-12">
             <h2 className="text-3xl font-display font-bold tracking-tight text-slate-900">Questions</h2>
