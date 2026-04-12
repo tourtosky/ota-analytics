@@ -78,7 +78,7 @@ export default function Home() {
       <nav className="fixed top-0 w-full z-50 px-6">
         <div className="max-w-6xl mx-auto mt-4 px-6 h-14 flex items-center justify-between rounded-2xl bg-white/80 backdrop-blur-2xl border border-slate-200 shadow-sm">
           <span className="text-base font-bold tracking-tight">
-            tour<span className="text-cyan-700">boost</span>
+            peregr<span className="text-cyan-700">io</span>
           </span>
           <div className="flex items-center gap-6 text-sm">
             <a href="#features" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">Features</a>
@@ -487,7 +487,7 @@ export default function Home() {
           </motion.div>
 
           <FAQ q="Is this really free?" a="Yes. Your first analysis is completely free. No credit card, no signup, no tricks. We want you to see the value before anything else." />
-          <FAQ q="How does TourBoost work?" a="We pull your listing data and the top 10 competitors in your destination and category. Our AI analyzes every gap and generates specific, actionable fixes." />
+          <FAQ q="How does Peregrio work?" a="We pull your listing data and the top 10 competitors in your destination and category. Our AI analyzes every gap and generates specific, actionable fixes." />
           <FAQ q="What do you analyze?" a="Six dimensions: title quality, description depth, pricing competitiveness, review performance, photo count, and listing completeness (inclusions, exclusions, itinerary, cancellation policy). Each scored 0-100." />
           <FAQ q="Do I need an account on the platform?" a="No. You just need the URL of your listing. That's it." />
           <FAQ q="How long does it take?" a="About 30 seconds. We fetch data, run the competitor comparison, and generate AI recommendations in real-time." />
@@ -500,14 +500,16 @@ export default function Home() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <span className="text-base font-bold tracking-tight text-slate-900">
-              tour<span className="text-cyan-700">boost</span>
+              peregr<span className="text-cyan-700">io</span>
             </span>
             <span className="text-slate-400 text-sm">Listing intelligence for tour operators</span>
           </div>
           <div className="flex gap-8 text-sm text-slate-400">
-            <a href="mailto:hello@tourboost.app" className="hover:text-slate-900 transition-colors">Contact</a>
+            <a href="/contact" className="hover:text-slate-900 transition-colors">Contact</a>
             <a href="/pricing" className="hover:text-slate-900 transition-colors">Pricing</a>
-            <a href="#" className="hover:text-slate-900 transition-colors">Privacy</a>
+            <a href="/blog" className="hover:text-slate-900 transition-colors">Blog</a>
+            <a href="/privacy" className="hover:text-slate-900 transition-colors">Privacy</a>
+            <a href="/terms" className="hover:text-slate-900 transition-colors">Terms</a>
           </div>
         </div>
       </footer>

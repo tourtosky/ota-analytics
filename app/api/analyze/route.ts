@@ -6,6 +6,7 @@ import { fetchProduct, searchCompetitors, formatCompetitorData, getSearchResultP
 import { discoverListings } from "@/lib/viator/discovery";
 import { fetchReviews } from "@/lib/viator/reviews";
 import { calculateScores } from "@/lib/analysis/scoring";
+import { generateRecommendations, generateReviewInsights } from "@/lib/analysis/recommendations";
 import { mergeProductData } from "@/lib/scraping/merge";
 import { logAdminEvent } from "@/lib/admin/events";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -197,7 +198,20 @@ async function processAnalysis(analysisId: string, productCode: string) {
     scores.completeness = safeScore(scores.completeness);
     scores.overall = safeScore(scores.overall);
 
-    // 5. Save — no AI recommendations or review insights (shown blurred on frontend)
+    // 6. Run AI + discovery in parallel (independent)
+    await updateProgress(analysisId, "generating_insights", 85, "Generating AI recommendations...");
+    const [recommendations, reviewInsights] = await Promise.all([
+      generateRecommendations(mergedProduct, competitors, operatorReviews, competitorReviews).catch((err) => {
+        console.error("generateRecommendations failed:", err);
+        return null;
+      }),
+      generateReviewInsights(operatorReviews, competitorReviews).catch((err) => {
+        console.error("generateReviewInsights failed:", err);
+        return null;
+      }),
+    ]);
+
+    // 7. Save
     await updateProgress(analysisId, "saving", 95, "Finalizing your report...");
     await db
       .update(analyses)
@@ -216,8 +230,8 @@ async function processAnalysis(analysisId: string, productCode: string) {
         productData: mergedProduct as unknown as Record<string, unknown>,
         competitorsData: competitors as any,
         listings,
-        recommendations: null,
-        reviewInsights: null,
+        recommendations: recommendations ?? null,
+        reviewInsights: reviewInsights ?? null,
         completedAt: new Date(),
         dataSource: "api-only",
       })

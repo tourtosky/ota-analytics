@@ -2,7 +2,7 @@
 
 ## Context
 
-You are working in the TourBoost repo (Next.js 16 App Router + TypeScript + Drizzle + PostgreSQL + Supabase Auth). Read `CLAUDE.md` at the repo root before starting — it documents the full tech stack, project structure, scoring system, and coding conventions. Follow them strictly.
+You are working in the Peregrio repo (Next.js 16 App Router + TypeScript + Drizzle + PostgreSQL + Supabase Auth). Read `CLAUDE.md` at the repo root before starting — it documents the full tech stack, project structure, scoring system, and coding conventions. Follow them strictly.
 
 Relevant existing modules you MUST reuse (do not reinvent):
 
@@ -19,7 +19,7 @@ Relevant existing modules you MUST reuse (do not reinvent):
 
 ## Goal
 
-Build a **Listing Discovery + Rank Tracking** feature for TourBoost.
+Build a **Listing Discovery + Rank Tracking** feature for Peregrio.
 
 A Viator listing URL has the format `https://www.viator.com/{DestinationSlug}-tours/{CategorySlug}/d{destId}-tag{tagId}` (e.g. `https://www.viator.com/Amsterdam-tours/Canal-Cruises/d525-tag21709`). A single tour appears on many such listings (one per `destination × tag` combination).
 

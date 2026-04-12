@@ -1,8 +1,8 @@
-# TourBoost — Project Summary
+# Peregrio — Project Summary
 
 ## What We Built
 
-**TourBoost** is a complete, production-ready SaaS application that helps tour operators optimize their Viator listings through AI-powered competitive analysis.
+**Peregrio** is a complete, production-ready SaaS application that helps tour operators optimize their Viator listings through AI-powered competitive analysis.
 
 ## ✅ Completed Features
 
@@ -120,7 +120,7 @@
 ## 📂 File Structure
 
 ```
-tourboost/
+peregrio/
 ├── app/
 │   ├── api/
 │   │   ├── analyze/route.ts          # Analysis endpoint
@@ -188,7 +188,7 @@ DATABASE_URL=                         # PostgreSQL connection string
 
 **Problem:** Tour operators don't know why their Viator listings underperform
 
-**Solution:** TourBoost shows exactly what competitors are doing better and provides specific, AI-powered recommendations to close the gap
+**Solution:** Peregrio shows exactly what competitors are doing better and provides specific, AI-powered recommendations to close the gap
 
 **Result:** Increased visibility, more bookings, higher revenue
 

@@ -10,9 +10,10 @@ interface RegisterModalProps {
   onClose: () => void;
   heading?: string;
   subheading?: string;
+  onSuccess?: () => void;
 }
 
-export default function RegisterModal({ open, onClose, heading, subheading }: RegisterModalProps) {
+export default function RegisterModal({ open, onClose, heading, subheading, onSuccess }: RegisterModalProps) {
   const [mode, setMode] = useState<"register" | "login">("register");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -56,8 +57,12 @@ export default function RegisterModal({ open, onClose, heading, subheading }: Re
       // Create/fetch profile
       await fetch("/api/auth/me");
 
-      // Reload the page to reflect auth state
-      window.location.reload();
+      // Reflect auth state
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        window.location.reload();
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);

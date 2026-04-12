@@ -1,4 +1,4 @@
-# TourBoost — Quick Start Guide
+# Peregrio — Quick Start Guide
 
 ## The Error You're Seeing
 
@@ -53,14 +53,14 @@ VIATOR_BASE_URL=https://api.viator.com/partner
 ANTHROPIC_API_KEY=sk-ant-your_actual_key_here
 
 # Database Configuration (update username/password)
-DATABASE_URL=postgresql://your_username:your_password@localhost:5432/tourboost
+DATABASE_URL=postgresql://your_username:your_password@localhost:5432/peregrio
 ```
 
 ### Step 3: Set Up the Database
 
 ```bash
 # Create the database
-createdb tourboost
+createdb peregrio
 
 # Push the schema
 npm run db:push
@@ -82,7 +82,7 @@ npm run db:push
    - Search for any tour (e.g., "Eiffel Tower tour")
    - Copy the URL (looks like: `https://www.viator.com/tours/Paris/Skip-the-Line-Eiffel-Tower-Tour/d479-12345P6`)
 
-4. **Paste it in TourBoost and click "Analyze"**
+4. **Paste it in Peregrio and click "Analyze"**
 
 5. **Wait 20-30 seconds** while it:
    - Fetches your tour data from Viator
@@ -211,7 +211,7 @@ npm run build
 1. **Check logs** in your terminal for detailed error messages
 2. **Review SETUP.md** for detailed troubleshooting
 3. **Verify API keys** are correct in `.env.local`
-4. **Test database connection** with `psql tourboost`
+4. **Test database connection** with `psql peregrio`
 
 ---
 

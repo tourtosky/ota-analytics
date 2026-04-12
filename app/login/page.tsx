@@ -76,7 +76,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
             <span className="text-2xl font-bold tracking-tight text-slate-900">
-              tour<span className="text-cyan-700">boost</span>
+              peregr<span className="text-cyan-700">io</span>
             </span>
           </Link>
           <p className="text-sm text-slate-400 mt-2">Sign in to your account</p>

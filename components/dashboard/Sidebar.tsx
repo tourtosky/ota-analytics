@@ -59,7 +59,7 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="h-16 flex items-center px-6 flex-shrink-0 border-b border-slate-200">
         <Link href="/dashboard" className="text-base font-bold tracking-tight text-slate-900">
-          tour<span className="text-cyan-700">boost</span>
+          peregr<span className="text-cyan-700">io</span>
         </Link>
       </div>
 
@@ -127,7 +127,7 @@ export default function Sidebar() {
           <Menu className="w-5 h-5" />
         </button>
         <span className="ml-3 text-sm font-bold text-slate-900">
-          tour<span className="text-cyan-700">boost</span>
+          peregr<span className="text-cyan-700">io</span>
         </span>
       </div>
 

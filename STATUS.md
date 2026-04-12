@@ -1,8 +1,8 @@
-# TourBoost — Current Status & Next Steps
+# Peregrio — Current Status & Next Steps
 
 ## ✅ What's Complete (100% Built)
 
-The entire TourBoost application is **fully built and tested**. Here's what works:
+The entire Peregrio application is **fully built and tested**. Here's what works:
 
 ### Frontend (Landing Page + Report Page)
 - ✅ Premium dark-themed landing page with all sections
@@ -61,7 +61,7 @@ The app is complete but needs **4 configuration steps** to run:
 ### 3. Set Up PostgreSQL Database
 ```bash
 # Create database
-createdb tourboost
+createdb peregrio
 
 # Push schema
 npm run db:push
@@ -72,7 +72,7 @@ npm run db:push
 # Edit this file and add your keys:
 VIATOR_API_KEY=your_actual_key
 ANTHROPIC_API_KEY=sk-ant-your_actual_key
-DATABASE_URL=postgresql://username:password@localhost:5432/tourboost
+DATABASE_URL=postgresql://username:password@localhost:5432/peregrio
 ```
 
 ---
@@ -180,4 +180,4 @@ Ready to Launch: Yes, after configuration ✅
 
 **Option D:** Something else?
 
-Let me know and I'll help you get TourBoost fully running! 🚀
+Let me know and I'll help you get Peregrio fully running! 🚀

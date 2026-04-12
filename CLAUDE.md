@@ -1,8 +1,8 @@
-# CLAUDE.md - TourBoost
+# CLAUDE.md - Peregrio
 
 ## Project Overview
 
-TourBoost is a SaaS application that helps tour operators optimize their Viator listings. It analyzes a listing against top competitors in the same destination/category, produces a 0-100 score across 6 categories, and generates AI-powered recommendations to improve bookings. The app has auth, role-based dashboards (admin + client), paid Stripe plans, and a Viator scraping fallback alongside the Partner API.
+Peregrio is a SaaS application that helps tour operators optimize their Viator listings. It analyzes a listing against top competitors in the same destination/category, produces a 0-100 score across 6 categories, and generates AI-powered recommendations to improve bookings. The app has auth, role-based dashboards (admin + client), paid Stripe plans, and a Viator scraping fallback alongside the Partner API.
 
 ## Tech Stack
 

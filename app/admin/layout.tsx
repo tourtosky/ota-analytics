@@ -114,7 +114,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="h-14 flex items-center px-5 flex-shrink-0" style={{ borderBottom: "1px solid var(--adm-border)" }}>
           <Link href="/admin" className="flex items-center gap-2">
             <span className="text-base font-bold tracking-tight adm-text-primary">
-              Tour<span className="text-sky-500">Boost</span>
+              Peregr<span className="text-sky-500">io</span>
             </span>
             <span className="text-[10px] adm-text-muted font-normal">Admin</span>
           </Link>
@@ -178,7 +178,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </svg>
           </button>
           <span className="ml-3 text-sm font-bold adm-text-primary">
-            Tour<span className="text-sky-500">Boost</span>
+            Peregr<span className="text-sky-500">io</span>
             <span className="adm-text-muted font-normal ml-1">Admin</span>
           </span>
         </div>

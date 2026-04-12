@@ -1,6 +1,6 @@
-# TourBoost Setup Guide
+# Peregrio Setup Guide
 
-Follow these steps to get TourBoost running on your machine.
+Follow these steps to get Peregrio running on your machine.
 
 ## Prerequisites
 
@@ -14,8 +14,8 @@ Follow these steps to get TourBoost running on your machine.
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/yourusername/tourboost.git
-cd tourboost
+git clone https://github.com/yourusername/peregrio.git
+cd peregrio
 npm install
 ```
 
@@ -24,13 +24,13 @@ npm install
 Create a new PostgreSQL database:
 
 ```bash
-createdb tourboost
+createdb peregrio
 ```
 
 Or using psql:
 
 ```sql
-CREATE DATABASE tourboost;
+CREATE DATABASE peregrio;
 ```
 
 ### 3. Configure Environment Variables
@@ -52,10 +52,10 @@ VIATOR_BASE_URL=https://api.viator.com/partner
 ANTHROPIC_API_KEY=sk-ant-your_actual_anthropic_key
 
 # Database Configuration
-DATABASE_URL=postgresql://username:password@localhost:5432/tourboost
+DATABASE_URL=postgresql://username:password@localhost:5432/peregrio
 ```
 
-**Important:** Replace `username`, `password`, and `tourboost` with your actual PostgreSQL credentials.
+**Important:** Replace `username`, `password`, and `peregrio` with your actual PostgreSQL credentials.
 
 ### 4. Push Database Schema
 
@@ -79,7 +79,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 1. Go to [Viator](https://www.viator.com/) and find any tour listing
 2. Copy the product URL (e.g., `https://www.viator.com/tours/Paris/Eiffel-Tower-Tour/d479-12345P6`)
-3. Paste it into the TourBoost analyze form
+3. Paste it into the Peregrio analyze form
 4. Wait 20-30 seconds for the analysis to complete
 5. View your comprehensive report!
 

@@ -1,6 +1,6 @@
-# TourBoost — Viator Listing Optimization & Analytics
+# Peregrio — Viator Listing Optimization & Analytics
 
-**TourBoost** is a SaaS tool that helps tour operators analyze and optimize their Viator listings by comparing them against top competitors. Paste a Viator product URL or ID, and TourBoost fetches competitor data, scores the listing across 6 dimensions, and generates AI-powered recommendations to increase bookings.
+**Peregrio** is a SaaS tool that helps tour operators analyze and optimize their Viator listings by comparing them against top competitors. Paste a Viator product URL or ID, and Peregrio fetches competitor data, scores the listing across 6 dimensions, and generates AI-powered recommendations to increase bookings.
 
 Live at **[peregrio.com](https://peregrio.com)**.
 
@@ -34,8 +34,8 @@ Live at **[peregrio.com](https://peregrio.com)**.
 
 1. **Clone and install**
    ```bash
-   git clone https://github.com/yourusername/tourboost.git
-   cd tourboost
+   git clone https://github.com/yourusername/peregrio.git
+   cd peregrio
    npm install
    ```
 
@@ -175,4 +175,4 @@ Built with [Next.js](https://nextjs.org/), [Tailwind CSS](https://tailwindcss.co
 
 ---
 
-**TourBoost** — Built for tour operators who want to dominate Viator.
+**Peregrio** — Built for tour operators who want to dominate Viator.

@@ -210,7 +210,7 @@ export default function ReportPage({
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <span className="text-lg font-bold tracking-tight text-slate-900">
-              tour<span className="text-cyan-700">boost</span>
+              peregr<span className="text-cyan-700">io</span>
             </span>
           </Link>
           <Link href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 transition-colors text-sm font-medium">
@@ -273,7 +273,39 @@ export default function ReportPage({
         {/* Recommendations — real or blurred */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="mb-8">
           {hasRecommendations ? (
-            <Recommendations recommendations={recommendations} />
+            <>
+              {/* First 2 recommendations — visible */}
+              <Recommendations recommendations={recommendations.slice(0, 2)} />
+
+              {/* Remaining — blurred with CTA */}
+              {recommendations.length > 2 && (
+                <div className="relative mt-4 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                  <div className="pointer-events-none select-none blur-[5px] opacity-50">
+                    <Recommendations recommendations={recommendations.slice(2)} />
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-[2px]">
+                    <div className="text-center px-6 py-8">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-50 to-violet-50 border border-slate-200 flex items-center justify-center mx-auto mb-4">
+                        <Sparkles className="w-5 h-5 text-cyan-700" />
+                      </div>
+                      <h4 className="text-lg font-display font-bold text-slate-900 mb-2">
+                        {recommendations.length - 2} more recommendations
+                      </h4>
+                      <p className="text-sm text-slate-500 mb-5 max-w-xs mx-auto">
+                        Sign up free to see all {recommendations.length} personalized recommendations for your listing.
+                      </p>
+                      <button
+                        onClick={() => setShowRegister(true)}
+                        className="inline-flex items-center gap-2 px-6 py-3 btn-gradient text-white font-semibold rounded-xl text-sm shadow-lg shadow-cyan-700/20"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        See All Recommendations
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <LockedSection title="AI-Powered Recommendations" onUnlock={() => setShowRegister(true)}>
               <Recommendations recommendations={fakeRecommendations} />

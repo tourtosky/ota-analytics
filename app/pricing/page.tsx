@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Sparkles, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import RegisterModal from "@/components/RegisterModal";
 
 /* ─── FAQ (same component as landing) ─── */
@@ -75,6 +76,11 @@ export default function PricingPage() {
   const [showRegister, setShowRegister] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [pendingUrl, setPendingUrl] = useState("");
+  const [urlInput, setUrlInput] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState("");
+  const router = useRouter();
 
   const handleSubscribe = async (plan: "growth" | "pro") => {
     setLoadingPlan(plan);
@@ -114,12 +120,47 @@ export default function PricingPage() {
     }
   };
 
+  const handleFreeAnalyze = () => {
+    setAnalyzeError("");
+    const urlMatch = urlInput.match(/\/d\d+-([A-Za-z0-9]+)/);
+    const bareMatch = urlInput.trim().match(/^([A-Za-z0-9]{4,})$/);
+    const code = urlMatch?.[1] ?? bareMatch?.[1];
+    if (!code) {
+      setAnalyzeError("Please enter a valid Viator URL or product code.");
+      return;
+    }
+    setPendingUrl(code);
+    setShowRegister(true);
+  };
+
+  const handleAnalyzeAfterRegister = async () => {
+    if (!pendingUrl) {
+      router.push("/dashboard");
+      return;
+    }
+    setShowRegister(false);
+    setAnalyzing(true);
+    try {
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productCode: pendingUrl }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to start analysis");
+      router.push(`/report/${data.analysisId}`);
+    } catch (err) {
+      setAnalyzeError(err instanceof Error ? err.message : "Something went wrong");
+      setAnalyzing(false);
+    }
+  };
+
   const plans = [
     {
       name: "Free",
       badge: "Get Started",
       badgeColor: "bg-slate-100 text-slate-600",
-      description: "Perfect for trying TourBoost on your first listing",
+      description: "Perfect for trying Peregrio on your first listing",
       price: 0,
       priceAnnual: 0,
       period: "forever",
@@ -131,7 +172,7 @@ export default function PricingPage() {
         "AI recommendations preview (3 items)",
       ],
       cta: "Analyze My Listing \u2014 Free",
-      ctaLink: "/#cta",
+      ctaAction: "analyze",
       ctaStyle: "border border-slate-200 text-slate-900 hover:border-slate-300 hover:shadow-md",
       highlighted: false,
     },
@@ -188,20 +229,28 @@ export default function PricingPage() {
 
   return (
     <main className="bg-white text-slate-900 selection:bg-cyan-100">
-      <RegisterModal open={showRegister} onClose={() => setShowRegister(false)} />
+      <RegisterModal
+        open={showRegister}
+        onClose={() => setShowRegister(false)}
+        heading={pendingUrl ? "Create your free account" : undefined}
+        subheading={pendingUrl ? "Sign up to get your free listing analysis" : undefined}
+        onSuccess={pendingUrl ? handleAnalyzeAfterRegister : undefined}
+      />
 
       {/* ═══════════ NAV ═══════════ */}
       <nav className="fixed top-0 w-full z-50 px-6">
         <div className="max-w-6xl mx-auto mt-4 px-6 h-14 flex items-center justify-between rounded-2xl bg-white/80 backdrop-blur-2xl border border-slate-200 shadow-sm">
           <Link href="/" className="text-base font-bold tracking-tight">
-            tour<span className="text-cyan-700">boost</span>
+            peregr<span className="text-cyan-700">io</span>
           </Link>
           <div className="flex items-center gap-6 text-sm">
-            <Link href="/#features" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">Features</Link>
-            <Link href="/pricing" className="text-cyan-700 font-medium hidden sm:block">Pricing</Link>
-            <button onClick={() => setShowRegister(true)} className="px-4 py-1.5 rounded-lg btn-gradient text-white text-sm font-medium transition-all shadow-sm">
+            <a href="/#features" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">Features</a>
+            <a href="/pricing" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">Pricing</a>
+            <a href="/#faq" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">FAQ</a>
+            <a href="/login" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">Login</a>
+            <a href="/pricing" className="px-4 py-1.5 rounded-lg btn-gradient text-white text-sm font-medium transition-all shadow-sm">
               Try Free
-            </button>
+            </a>
           </div>
         </div>
       </nav>
@@ -327,13 +376,31 @@ export default function PricingPage() {
                     </p>
 
                     {/* CTA */}
-                    {plan.ctaLink ? (
-                      <Link
-                        href={plan.ctaLink}
-                        className={`block w-full text-center py-3.5 rounded-xl text-sm font-semibold transition-all ${plan.ctaStyle}`}
-                      >
-                        {plan.cta}
-                      </Link>
+                    {plan.ctaAction === "analyze" ? (
+                      <div className="space-y-3">
+                        <input
+                          type="text"
+                          value={urlInput}
+                          onChange={(e) => { setUrlInput(e.target.value); setAnalyzeError(""); }}
+                          placeholder="Paste your Viator listing URL..."
+                          disabled={analyzing}
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-cyan-500 focus:bg-white transition-all text-sm disabled:opacity-50"
+                        />
+                        <button
+                          onClick={handleFreeAnalyze}
+                          disabled={analyzing}
+                          className="block w-full text-center py-3.5 rounded-xl text-sm font-semibold transition-all btn-gradient text-white shadow-lg shadow-cyan-700/20 disabled:opacity-60 flex items-center justify-center gap-2"
+                        >
+                          {analyzing ? (
+                            <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing...</>
+                          ) : (
+                            plan.cta
+                          )}
+                        </button>
+                        {analyzeError && (
+                          <p className="text-xs text-red-500 font-medium">{analyzeError}</p>
+                        )}
+                      </div>
                     ) : (
                       <button
                         onClick={() => handleSubscribe(plan.name.toLowerCase() as "growth" | "pro")}
@@ -485,14 +552,16 @@ export default function PricingPage() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <Link href="/" className="text-base font-bold tracking-tight text-slate-900">
-              tour<span className="text-cyan-700">boost</span>
+              peregr<span className="text-cyan-700">io</span>
             </Link>
             <span className="text-slate-400 text-sm">Listing intelligence for tour operators</span>
           </div>
           <div className="flex gap-8 text-sm text-slate-400">
-            <a href="mailto:hello@tourboost.app" className="hover:text-slate-900 transition-colors">Contact</a>
+            <Link href="/contact" className="hover:text-slate-900 transition-colors">Contact</Link>
             <Link href="/pricing" className="hover:text-slate-900 transition-colors">Pricing</Link>
-            <a href="#" className="hover:text-slate-900 transition-colors">Privacy</a>
+            <Link href="/blog" className="hover:text-slate-900 transition-colors">Blog</Link>
+            <Link href="/privacy" className="hover:text-slate-900 transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-slate-900 transition-colors">Terms</Link>
           </div>
         </div>
       </footer>
