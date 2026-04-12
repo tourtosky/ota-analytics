@@ -69,6 +69,14 @@ export default function Home() {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
   const heroY = useTransform(scrollYProgress, [0, 0.5], [0, -60]);
   const [showRegister, setShowRegister] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((data) => { if (!data.error) setIsAuthenticated(true); })
+      .catch(() => {});
+  }, []);
 
   return (
     <main className="bg-white text-slate-900 selection:bg-cyan-100 overflow-x-hidden">
@@ -84,10 +92,18 @@ export default function Home() {
             <a href="#features" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">Features</a>
             <a href="/pricing" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">Pricing</a>
             <a href="#faq" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">FAQ</a>
-            <a href="/login" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">Login</a>
-            <a href="/pricing" className="px-4 py-1.5 rounded-lg btn-gradient text-white text-sm font-medium transition-all shadow-sm">
-              Try Free
-            </a>
+            {isAuthenticated ? (
+              <a href="/dashboard" className="px-4 py-1.5 rounded-lg btn-gradient text-white text-sm font-medium transition-all shadow-sm">
+                Dashboard →
+              </a>
+            ) : (
+              <>
+                <a href="/login" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">Login</a>
+                <a href="/pricing" className="px-4 py-1.5 rounded-lg btn-gradient text-white text-sm font-medium transition-all shadow-sm">
+                  Try Free
+                </a>
+              </>
+            )}
           </div>
         </div>
       </nav>

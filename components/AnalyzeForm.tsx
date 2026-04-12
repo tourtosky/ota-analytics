@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2, Sparkles } from "lucide-react";
 import RegisterModal from "@/components/RegisterModal";
@@ -12,7 +12,17 @@ export default function AnalyzeForm() {
   const [focused, setFocused] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [pendingCode, setPendingCode] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.error) setIsAuthenticated(true);
+      })
+      .catch(() => {});
+  }, []);
 
   const extractProductCode = (input: string): string | null => {
     const urlMatch = input.match(/\/d\d+-([A-Za-z0-9]+)/);
@@ -36,7 +46,7 @@ export default function AnalyzeForm() {
 
     const hasUsedFree = typeof window !== "undefined" && localStorage.getItem("peregrio_anon_used") === "1";
 
-    if (hasUsedFree) {
+    if (hasUsedFree && !isAuthenticated) {
       setPendingCode(productCode);
       setShowRegister(true);
       setLoading(false);
@@ -51,7 +61,14 @@ export default function AnalyzeForm() {
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to start analysis");
+      if (!response.ok) {
+        if (data.error === "plan_limit_reached") {
+          setError("__plan_limit__");
+          setLoading(false);
+          return;
+        }
+        throw new Error(data.error || "Failed to start analysis");
+      }
       if (typeof window !== "undefined") {
         localStorage.setItem("peregrio_anon_used", "1");
       }
@@ -133,7 +150,18 @@ export default function AnalyzeForm() {
           </button>
         </div>
       </div>
-      {error && <p className="mt-3 text-red-500 text-sm text-center">{error}</p>}
+      {error && (
+        error === "__plan_limit__" ? (
+          <p className="text-sm text-center text-slate-500 mt-3">
+            You&apos;ve reached your free limit.{" "}
+            <a href="/dashboard" className="text-cyan-700 font-medium hover:underline">
+              Go to Dashboard →
+            </a>
+          </p>
+        ) : (
+          <p className="text-sm text-red-500 mt-3 text-center">{error}</p>
+        )
+      )}
       <p className="mt-4 text-center text-xs text-slate-400">
         No signup required. Get your score in 30 seconds.
       </p>

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { profiles, analyses } from "@/lib/db/schema";
 import { eq, sql, desc } from "drizzle-orm";
 import { requireAdmin } from "@/lib/auth/admin-guard";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function GET() {
   const auth = await requireAdmin();
@@ -22,7 +23,22 @@ export async function GET() {
       .from(profiles)
       .orderBy(desc(profiles.createdAt));
 
-    return NextResponse.json({ clients });
+    // Fetch emails from Supabase auth
+    const supabase = await createServerSupabaseClient();
+    const { data: { users } } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+    const emailMap = new Map<string, string>();
+    if (users) {
+      for (const u of users) {
+        if (u.email) emailMap.set(u.id, u.email);
+      }
+    }
+
+    const clientsWithEmail = clients.map((c) => ({
+      ...c,
+      email: emailMap.get(c.id) || null,
+    }));
+
+    return NextResponse.json({ clients: clientsWithEmail });
   } catch (error) {
     console.error("Admin clients error:", error);
     return NextResponse.json({ error: String(error) }, { status: 500 });

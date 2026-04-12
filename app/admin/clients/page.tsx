@@ -7,6 +7,7 @@ type Plan = "free" | "growth" | "pro";
 
 interface Client {
   id: string;
+  email: string | null;
   role: "admin" | "client";
   plan: Plan;
   fullName: string | null;
@@ -75,6 +76,7 @@ export default function ClientsPage() {
     const q = search.toLowerCase();
     return (
       (c.fullName?.toLowerCase().includes(q)) ||
+      (c.email?.toLowerCase().includes(q)) ||
       (c.companyName?.toLowerCase().includes(q)) ||
       c.id.toLowerCase().includes(q)
     );
@@ -118,8 +120,8 @@ export default function ClientsPage() {
             <table className="w-full">
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--adm-border)" }}>
-                  {["Name", "Company", "Role", "Plan", "Analyses", "Joined", "Actions"].map((h, i) => (
-                    <th key={h} className={`${i === 0 ? "text-left" : i === 5 ? "text-right" : "text-center"} px-4 py-3 text-[11px] uppercase tracking-wider adm-text-muted font-medium`}>{h}</th>
+                  {["Name", "Email", "Company", "Role", "Plan", "Analyses", "Joined", "Actions"].map((h, i) => (
+                    <th key={h} className={`${i === 0 ? "text-left" : i === 6 ? "text-right" : "text-center"} px-4 py-3 text-[11px] uppercase tracking-wider adm-text-muted font-medium`}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -130,6 +132,7 @@ export default function ClientsPage() {
                       <div className="font-medium text-sm adm-text-primary">{client.fullName || "No name"}</div>
                       <div className="text-[11px] adm-text-muted font-mono truncate max-w-[200px]">{client.id}</div>
                     </td>
+                    <td className="px-4 py-3 text-sm adm-text-secondary">{client.email || "\u2014"}</td>
                     <td className="text-center px-4 py-3 text-sm adm-text-secondary">{client.companyName || "\u2014"}</td>
                     <td className="text-center px-4 py-3">
                       <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium ${
