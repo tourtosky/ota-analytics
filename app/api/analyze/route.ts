@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { analyses } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { fetchProduct, searchCompetitors, formatCompetitorData, getSearchResultPrice, fetchProductPrice } from "@/lib/viator/products";
 import { discoverListings } from "@/lib/viator/discovery";
 import { fetchReviews } from "@/lib/viator/reviews";
@@ -13,6 +13,12 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getOrCreateProfile } from "@/lib/auth/roles";
 import { PLAN_LIMITS } from "@/lib/plans";
 import { count } from "drizzle-orm";
+
+const CACHE_TTL_MS: Record<string, number> = {
+  free: Infinity,
+  growth: 7 * 24 * 60 * 60 * 1000,
+  pro: 1 * 24 * 60 * 60 * 1000,
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,6 +34,7 @@ export async function POST(request: NextRequest) {
 
     // Get current user (optional — public analyses are allowed)
     let userId: string | undefined;
+    let userPlan: string = "free";
     try {
       const supabase = await createServerSupabaseClient();
       const { data: { user } } = await supabase.auth.getUser();
@@ -36,6 +43,7 @@ export async function POST(request: NextRequest) {
 
         // Enforce plan limits for authenticated users
         const profile = await getOrCreateProfile(user.id, user.email);
+        userPlan = profile.plan ?? "free";
         const limit = PLAN_LIMITS[profile.plan as keyof typeof PLAN_LIMITS] ?? PLAN_LIMITS.free;
 
         if (limit !== Infinity) {
@@ -53,6 +61,37 @@ export async function POST(request: NextRequest) {
         }
       }
     } catch { /* unauthenticated — OK */ }
+
+    // ── Cache lookup ──────────────────────────────────────────────
+    const ttlMs = CACHE_TTL_MS[userPlan] ?? Infinity;
+    const cutoff = ttlMs === Infinity ? null : new Date(Date.now() - ttlMs);
+
+    const cacheConditions = [
+      eq(analyses.viatorProductCode, productCode),
+      eq(analyses.status, "completed"),
+    ];
+    if (cutoff) {
+      cacheConditions.push(
+        sql`${analyses.completedAt} > ${cutoff.toISOString()}`,
+      );
+    }
+
+    const [cached] = await db
+      .select({ id: analyses.id, completedAt: analyses.completedAt })
+      .from(analyses)
+      .where(and(...cacheConditions))
+      .orderBy(desc(analyses.completedAt))
+      .limit(1);
+
+    if (cached) {
+      logAdminEvent("analysis_cache_hit", {
+        productCode,
+        cachedId: cached.id,
+        plan: userPlan,
+      });
+      return NextResponse.json({ analysisId: cached.id, cached: true });
+    }
+    // ── End cache lookup ──────────────────────────────────────────
 
     // Create initial analysis record
     const [analysis] = await db

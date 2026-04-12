@@ -3,12 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2, Sparkles } from "lucide-react";
+import RegisterModal from "@/components/RegisterModal";
 
 export default function AnalyzeForm() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [focused, setFocused] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
+  const [pendingCode, setPendingCode] = useState<string | null>(null);
   const router = useRouter();
 
   const extractProductCode = (input: string): string | null => {
@@ -31,6 +34,15 @@ export default function AnalyzeForm() {
 
     setLoading(true);
 
+    const hasUsedFree = typeof window !== "undefined" && localStorage.getItem("peregrio_anon_used") === "1";
+
+    if (hasUsedFree) {
+      setPendingCode(productCode);
+      setShowRegister(true);
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch("/api/analyze", {
         method: "POST",
@@ -40,6 +52,34 @@ export default function AnalyzeForm() {
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to start analysis");
+      if (typeof window !== "undefined") {
+        localStorage.setItem("peregrio_anon_used", "1");
+      }
+      router.push(`/report/${data.analysisId}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+      setLoading(false);
+    }
+  };
+
+  const handleAnalyzeAfterRegister = async () => {
+    if (!pendingCode) {
+      setShowRegister(false);
+      return;
+    }
+    setShowRegister(false);
+    setLoading(true);
+    try {
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productCode: pendingCode }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to start analysis");
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("peregrio_anon_used");
+      }
       router.push(`/report/${data.analysisId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -48,6 +88,14 @@ export default function AnalyzeForm() {
   };
 
   return (
+    <>
+    <RegisterModal
+      open={showRegister}
+      onClose={() => setShowRegister(false)}
+      heading="You've used your free analysis"
+      subheading="Sign up free to get 1 more analysis and track your listing over time."
+      onSuccess={handleAnalyzeAfterRegister}
+    />
     <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto">
       <div className={`relative rounded-2xl p-[2px] transition-all duration-500 ${
         focused
@@ -90,5 +138,6 @@ export default function AnalyzeForm() {
         No signup required. Get your score in 30 seconds.
       </p>
     </form>
+    </>
   );
 }
