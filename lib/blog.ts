@@ -70,34 +70,53 @@ function toPublishedPost(post: BlogPost): PublishedPost {
   };
 }
 
-export async function getAllPosts(): Promise<PostMeta[]> {
-  const posts = await db
-    .select()
-    .from(blogPosts)
-    .where(eq(blogPosts.status, "published"))
-    .orderBy(desc(blogPosts.publishedAt), desc(blogPosts.createdAt));
+function handleBlogReadError(error: unknown, fallback: string) {
+  console.error(`[blog] ${fallback}:`, error);
+}
 
-  return posts.map(toPostMeta);
+export async function getAllPosts(): Promise<PostMeta[]> {
+  try {
+    const posts = await db
+      .select()
+      .from(blogPosts)
+      .where(eq(blogPosts.status, "published"))
+      .orderBy(desc(blogPosts.publishedAt), desc(blogPosts.createdAt));
+
+    return posts.map(toPostMeta);
+  } catch (error) {
+    handleBlogReadError(error, "Failed to load published posts");
+    return [];
+  }
 }
 
 export async function getPostMeta(slug: string): Promise<PostMeta | null> {
-  const [post] = await db
-    .select()
-    .from(blogPosts)
-    .where(and(eq(blogPosts.slug, slug), eq(blogPosts.status, "published")))
-    .limit(1);
+  try {
+    const [post] = await db
+      .select()
+      .from(blogPosts)
+      .where(and(eq(blogPosts.slug, slug), eq(blogPosts.status, "published")))
+      .limit(1);
 
-  return post ? toPostMeta(post) : null;
+    return post ? toPostMeta(post) : null;
+  } catch (error) {
+    handleBlogReadError(error, `Failed to load post metadata for ${slug}`);
+    return null;
+  }
 }
 
 export async function getPublishedPost(slug: string): Promise<PublishedPost | null> {
-  const [post] = await db
-    .select()
-    .from(blogPosts)
-    .where(and(eq(blogPosts.slug, slug), eq(blogPosts.status, "published")))
-    .limit(1);
+  try {
+    const [post] = await db
+      .select()
+      .from(blogPosts)
+      .where(and(eq(blogPosts.slug, slug), eq(blogPosts.status, "published")))
+      .limit(1);
 
-  return post ? toPublishedPost(post) : null;
+    return post ? toPublishedPost(post) : null;
+  } catch (error) {
+    handleBlogReadError(error, `Failed to load published post ${slug}`);
+    return null;
+  }
 }
 
 export function isBlogPostStatus(value: unknown): value is BlogPostStatus {
