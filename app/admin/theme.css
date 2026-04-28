@@ -127,6 +127,37 @@
 .admin-theme .adm-text-muted { color: var(--adm-text-muted); }
 .admin-theme .adm-text-faint { color: var(--adm-text-faint); }
 
+/* Blog Markdown preview */
+.admin-theme .adm-prose {
+  color: var(--adm-text-secondary);
+}
+.admin-theme .adm-prose :where(h1, h2, h3, h4, strong) {
+  color: var(--adm-text-primary);
+}
+.admin-theme .adm-prose :where(a) {
+  color: #0ea5e9;
+}
+.admin-theme .adm-prose :where(code) {
+  background: var(--adm-pre-bg);
+  border: 1px solid var(--adm-border);
+  color: var(--adm-text-primary);
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.35rem;
+}
+.admin-theme .adm-prose :where(pre) {
+  background: var(--adm-pre-bg);
+  border: 1px solid var(--adm-border);
+}
+.admin-theme .adm-prose :where(pre code) {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.admin-theme .adm-prose :where(blockquote) {
+  color: var(--adm-text-secondary);
+  border-left-color: #0ea5e9;
+}
+
 /* Light mode badge adjustments - badges use tailwind opacity classes that work in both modes */
 .admin-theme.light .adm-select option {
   background-color: #ffffff;
