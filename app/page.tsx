@@ -34,7 +34,6 @@ export default function Home() {
             peregr<span className="text-cyan-700">io</span>
           </span>
           <div className="flex items-center gap-6 text-sm">
-            <a href="/pricing" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">Pricing</a>
             {isAuthenticated ? (
               <a href="/dashboard" className="px-4 py-1.5 rounded-lg btn-gradient text-white text-sm font-medium transition-all shadow-sm">
                 Dashboard →
@@ -458,7 +457,6 @@ export default function Home() {
           <p>© 2025 Peregrio. Built for tour operators on Viator &amp; GetYourGuide.</p>
           <div className="flex gap-6">
             <a href="/blog" className="hover:text-slate-700 transition-colors">Blog</a>
-            <a href="/pricing" className="hover:text-slate-700 transition-colors">Pricing</a>
             <a href="/contact" className="hover:text-slate-700 transition-colors">Contact</a>
           </div>
         </div>
