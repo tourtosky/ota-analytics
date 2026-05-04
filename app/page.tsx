@@ -16,20 +16,13 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
-  const fadeIn = {
-    initial: { opacity: 0, y: 24 },
-    whileInView: { opacity: 1, y: 0 },
-    viewport: { once: true, amount: 0 },
-    transition: { duration: 0.6 },
-  };
-
   return (
     <main className="bg-white text-slate-900 selection:bg-cyan-100 overflow-x-hidden">
       <WaitlistModal open={showWaitlist} onClose={() => setShowWaitlist(false)} />
 
       {/* ═══════════ NAV ═══════════ */}
       <nav className="fixed top-0 w-full z-50 px-6">
-        <div className="max-w-6xl mx-auto mt-4 px-6 h-14 flex items-center justify-between rounded-2xl bg-white/80 backdrop-blur-2xl border border-slate-200 shadow-sm">
+        <div className="max-w-6xl mx-auto mt-4 px-6 h-14 flex items-center justify-between rounded-2xl bg-white/98 border border-slate-200 shadow-sm">
           <span className="text-base font-bold tracking-tight">
             peregr<span className="text-cyan-700">io</span>
           </span>
@@ -99,7 +92,7 @@ export default function Home() {
 
       {/* ═══════════ SECTION 1 — THE PROBLEM ═══════════ */}
       <section className="py-20 px-6 bg-slate-50">
-        <motion.div {...fadeIn} className="max-w-5xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight text-center text-slate-900">
             You&apos;re flying blind while competitors pull ahead
           </h2>
@@ -131,12 +124,12 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </motion.div>
+        </div>
       </section>
 
       {/* ═══════════ SECTION 2 — POSITION TRACKING ═══════════ */}
       <section className="py-24 px-6">
-        <motion.div {...fadeIn} className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center max-w-6xl mx-auto">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-cyan-700/80 font-medium mb-4">Position Tracking</p>
             <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight text-slate-900 mb-5">
@@ -170,8 +163,6 @@ export default function Home() {
                 </linearGradient>
               </defs>
 
-              {/* Grid lines for ranks 2, 5, 8, 11, 14 — y mapped: rank → y */}
-              {/* y(rank) = 30 + ((rank - 2) / 12) * 200  → rank 2 = 30, rank 14 = 230 */}
               {[
                 { rank: 2, y: 30 },
                 { rank: 5, y: 80 },
@@ -185,7 +176,6 @@ export default function Home() {
                 </g>
               ))}
 
-              {/* X-axis labels */}
               {[
                 { d: "Apr 1", x: 60 },
                 { d: "Apr 10", x: 195 },
@@ -195,12 +185,9 @@ export default function Home() {
                 <text key={t.d} x={t.x} y="255" textAnchor="middle" fontSize="11" fill="#94a3b8">{t.d}</text>
               ))}
 
-              {/* Algorithm change vertical dashed line at x=290 */}
               <line x1="290" x2="290" y1="20" y2="240" stroke="#f59e0b" strokeDasharray="4 3" strokeWidth="1.5" />
               <text x="290" y="14" textAnchor="middle" fontSize="10" fill="#f59e0b">Algorithm update</text>
 
-              {/* Position area + line: 20 points from Apr 1 (x=60) to Apr 30 (x=455) */}
-              {/* Path: starts ~rank 8 → improves to ~3 → drops to 11 after marker → recovers to ~5 */}
               <path
                 d="M 60 130 L 80 120 L 100 105 L 120 95 L 140 85 L 160 70 L 180 60 L 200 50 L 220 55 L 240 50 L 260 60 L 280 70 L 290 90 L 300 150 L 320 180 L 340 175 L 360 160 L 380 130 L 400 110 L 420 95 L 440 85 L 455 80 L 455 240 L 60 240 Z"
                 fill="url(#posGrad)"
@@ -214,28 +201,23 @@ export default function Home() {
                 strokeLinejoin="round"
               />
 
-              {/* Red dot at the drop point */}
               <circle cx="320" cy="180" r="5" fill="#ef4444" />
               <circle cx="320" cy="180" r="9" fill="#ef4444" fillOpacity="0.15" />
 
-              {/* Tooltip near drop */}
               <rect x="335" y="162" width="118" height="26" rx="6" fill="white" stroke="#e2e8f0" strokeWidth="1" />
               <text x="394" y="179" textAnchor="middle" fontSize="10" fill="#ef4444">⬇ Dropped to #11</text>
             </svg>
           </div>
-        </motion.div>
+        </div>
       </section>
 
       {/* ═══════════ SECTION 3 — REVIEW INTELLIGENCE ═══════════ */}
       <section className="py-24 px-6 bg-slate-50">
-        <motion.div {...fadeIn} className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center max-w-6xl mx-auto">
-          {/* Graphic LEFT */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center max-w-6xl mx-auto">
           <div className="border border-slate-200 rounded-2xl p-6 bg-white shadow-sm order-2 lg:order-1">
             <svg viewBox="0 0 480 280" className="w-full">
-              {/* Y-axis label rotated */}
               <text x="-130" y="14" transform="rotate(-90)" fontSize="10" fill="#94a3b8">Reviews / week</text>
 
-              {/* Legend */}
               <g transform="translate(280, 8)">
                 <rect x="0" y="0" width="8" height="8" fill="#10b981" />
                 <text x="13" y="8" fontSize="11" fill="#475569">Positive</text>
@@ -245,7 +227,6 @@ export default function Home() {
                 <text x="138" y="8" fontSize="11" fill="#475569">Negative</text>
               </g>
 
-              {/* Bars: 12 weeks. Width 24, gap 12, start x=30. Each bar baseline at y=240, max height 200. */}
               {[
                 { pos: 8, neu: 3, neg: 4 },
                 { pos: 9, neu: 2, neg: 5 },
@@ -261,7 +242,7 @@ export default function Home() {
                 { pos: 15, neu: 2, neg: 1 },
               ].map((w, i) => {
                 const x = 30 + i * 36;
-                const scale = 10; // px per review unit
+                const scale = 10;
                 const negH = w.neg * scale;
                 const neuH = w.neu * scale;
                 const posH = w.pos * scale;
@@ -279,13 +260,11 @@ export default function Home() {
                 );
               })}
 
-              {/* Vertical dashed line between W8 and W9: W8 ends at x=30+7*36+24=306, W9 starts at x=30+8*36=318. Mid=312 */}
               <line x1="312" x2="312" y1="20" y2="240" stroke="#7c3aed" strokeDasharray="4 3" strokeWidth="1.5" />
               <text x="312" y="14" textAnchor="middle" fontSize="10" fill="#7c3aed">Peregrio alerts start</text>
             </svg>
           </div>
 
-          {/* Copy RIGHT */}
           <div className="order-1 lg:order-2">
             <p className="text-xs uppercase tracking-[0.2em] text-violet-600 font-medium mb-4">Review Intelligence</p>
             <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight text-slate-900 mb-5">
@@ -309,12 +288,12 @@ export default function Home() {
               ))}
             </ul>
           </div>
-        </motion.div>
+        </div>
       </section>
 
       {/* ═══════════ SECTION 4 — COMPETITOR MONITORING ═══════════ */}
       <section className="py-24 px-6">
-        <motion.div {...fadeIn} className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center max-w-6xl mx-auto">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-amber-600 font-medium mb-4">Competitor Radar</p>
             <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight text-slate-900 mb-5">
@@ -340,7 +319,6 @@ export default function Home() {
 
           <div className="border border-slate-200 rounded-2xl p-6 bg-white shadow-sm">
             <svg viewBox="0 0 480 300" className="w-full">
-              {/* Header row */}
               <g>
                 <text x="20" y="22" fontSize="11" fill="#94a3b8">Operator</text>
                 <text x="200" y="22" fontSize="11" fill="#94a3b8">Rank</text>
@@ -350,8 +328,6 @@ export default function Home() {
                 <line x1="20" x2="460" y1="32" y2="32" stroke="#e2e8f0" strokeWidth="1" />
               </g>
 
-              {/* Data rows. Each 44px tall. Start y=42. */}
-              {/* Row 1 — You (highlighted) */}
               <g>
                 <rect x="20" y="42" width="440" height="44" fill="#f0f9ff" rx="4" />
                 <rect x="20" y="42" width="3" height="44" fill="#0891b2" />
@@ -363,7 +339,6 @@ export default function Home() {
                 <text x="410" y="70" fontSize="12" fill="#94a3b8">–</text>
               </g>
 
-              {/* Row 2 — Sunset Tours (price drop) */}
               <g>
                 <rect x="20" y="92" width="440" height="44" fill="white" rx="4" />
                 <text x="32" y="118" fontSize="12" fill="#0f172a">Sunset Tours</text>
@@ -374,7 +349,6 @@ export default function Home() {
                 <text x="428" y="121" textAnchor="middle" fontSize="11" fill="#16a34a">↓ $8</text>
               </g>
 
-              {/* Row 3 — City Explorers */}
               <g>
                 <rect x="20" y="142" width="440" height="44" fill="#f8fafc" rx="4" />
                 <text x="32" y="168" fontSize="12" fill="#0f172a">City Explorers</text>
@@ -384,7 +358,6 @@ export default function Home() {
                 <text x="410" y="168" fontSize="12" fill="#94a3b8">–</text>
               </g>
 
-              {/* Row 4 — Harbor Trips (photo change) */}
               <g>
                 <rect x="20" y="192" width="440" height="44" fill="white" rx="4" />
                 <text x="32" y="218" fontSize="12" fill="#0f172a">Harbor Trips</text>
@@ -395,7 +368,6 @@ export default function Home() {
                 <text x="428" y="221" textAnchor="middle" fontSize="11" fill="#d97706">+4 photos</text>
               </g>
 
-              {/* Row 5 — AdventureX */}
               <g>
                 <rect x="20" y="242" width="440" height="44" fill="#f8fafc" rx="4" />
                 <text x="32" y="268" fontSize="12" fill="#0f172a">AdventureX</text>
@@ -406,12 +378,12 @@ export default function Home() {
               </g>
             </svg>
           </div>
-        </motion.div>
+        </div>
       </section>
 
       {/* ═══════════ SECTION 5 — SOCIAL PROOF QUOTE ═══════════ */}
       <section className="py-20 px-6 bg-slate-50">
-        <motion.div {...fadeIn} className="max-w-2xl mx-auto text-center">
+        <div className="max-w-2xl mx-auto text-center">
           <div className="text-8xl text-cyan-100 font-serif leading-none select-none" aria-hidden>&ldquo;</div>
           <p className="text-xl text-slate-700 leading-relaxed italic -mt-4">
             I had no idea my photos were half the count of my top competitor.
@@ -428,12 +400,12 @@ export default function Home() {
               Join the waitlist
             </button>
           </div>
-        </motion.div>
+        </div>
       </section>
 
       {/* ═══════════ SECTION 6 — FINAL CTA ═══════════ */}
       <section className="py-24 px-6 bg-gradient-to-br from-cyan-50 to-violet-50">
-        <motion.div {...fadeIn} className="max-w-3xl mx-auto text-center">
+        <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight text-slate-900 mb-5">
             Stop guessing. Start outranking.
           </h2>
@@ -448,18 +420,12 @@ export default function Home() {
             Get early access →
           </button>
           <p className="text-slate-400 text-sm mt-3">No credit card. No commitment.</p>
-        </motion.div>
+        </div>
       </section>
 
       {/* ═══════════ FOOTER ═══════════ */}
-      <footer className="py-8 px-6 border-t border-slate-100">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-400 text-sm">
-          <p>© 2025 Peregrio. Built for tour operators on Viator &amp; GetYourGuide.</p>
-          <div className="flex gap-6">
-            <a href="/blog" className="hover:text-slate-700 transition-colors">Blog</a>
-            <a href="/contact" className="hover:text-slate-700 transition-colors">Contact</a>
-          </div>
-        </div>
+      <footer className="py-8 px-6 border-t border-slate-100 text-center text-slate-400 text-sm">
+        © 2025 Peregrio. Built for tour operators on Viator &amp; GetYourGuide.
       </footer>
     </main>
   );
