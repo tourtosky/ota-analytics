@@ -19,6 +19,18 @@ export const profiles = pgTable("profiles", {
 export type Profile = InferSelectModel<typeof profiles>;
 export type NewProfile = InferInsertModel<typeof profiles>;
 
+export const waitlist = pgTable("waitlist", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  email: text("email").notNull().unique(),
+  name: text("name").notNull(),
+  platform: varchar("platform", { length: 20 }).notNull(),
+  listingCount: varchar("listing_count", { length: 20 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type WaitlistEntry = InferSelectModel<typeof waitlist>;
+export type NewWaitlistEntry = InferInsertModel<typeof waitlist>;
+
 export const analyses = pgTable("analyses", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: uuid("user_id"),
