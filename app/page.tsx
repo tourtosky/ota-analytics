@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import WaitlistModal from "@/components/WaitlistModal";
-import { motion } from "framer-motion";
 import { TrendingDown, EyeOff, BarChart2 } from "lucide-react";
 
 export default function Home() {
@@ -21,8 +20,8 @@ export default function Home() {
       <WaitlistModal open={showWaitlist} onClose={() => setShowWaitlist(false)} />
 
       {/* ═══════════ NAV ═══════════ */}
-      <nav className="fixed top-0 w-full z-50 px-6">
-        <div className="max-w-6xl mx-auto mt-4 px-6 h-14 flex items-center justify-between rounded-2xl bg-white/98 border border-slate-200 shadow-sm">
+      <nav className="fixed top-0 w-full z-50 bg-white border-b border-slate-200">
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <span className="text-base font-bold tracking-tight">
             peregr<span className="text-cyan-700">io</span>
           </span>
@@ -49,36 +48,26 @@ export default function Home() {
         <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-100/40 blur-[120px]" />
 
         <div className="relative z-10 max-w-3xl mx-auto text-center pt-24 pb-16">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }} className="mb-5 md:mb-6">
+          <div className="mb-5 md:mb-6">
             <span className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-cyan-700/80 font-medium">
               <span className="w-6 h-px bg-cyan-700/30" />
               Growth intelligence for tour operators
               <span className="w-6 h-px bg-cyan-700/30" />
             </span>
-          </motion.div>
+          </div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.1 }}
-            className="text-[2.5rem] sm:text-[3.25rem] md:text-[4.5rem] leading-[1.05] font-display font-bold tracking-tight mb-6 md:mb-8 text-slate-900"
-          >
+          <h1 className="text-[2.5rem] sm:text-[3.25rem] md:text-[4.5rem] leading-[1.05] font-display font-bold tracking-tight mb-6 md:mb-8 text-slate-900">
             Know exactly why you&apos;re
             <br />
             <span className="gradient-text">losing bookings.</span>
-          </motion.h1>
+          </h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.25 }}
-            className="text-base md:text-lg text-slate-500 leading-relaxed mb-10 max-w-2xl mx-auto"
-          >
+          <p className="text-base md:text-lg text-slate-500 leading-relaxed mb-10 max-w-2xl mx-auto">
             Peregrio tracks your Viator and GetYourGuide listings, monitors competitors,
             and tells you what to fix — before another operator takes your spot.
-          </motion.p>
+          </p>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.35 }}>
+          <div>
             <button
               onClick={() => setShowWaitlist(true)}
               className="px-8 py-4 rounded-xl btn-gradient text-white text-base font-semibold transition-all shadow-md hover:shadow-lg"
@@ -86,7 +75,7 @@ export default function Home() {
               Get early access
             </button>
             <p className="text-slate-400 text-sm mt-4">Join 47 operators already on the waitlist</p>
-          </motion.div>
+          </div>
         </div>
       </section>
 
