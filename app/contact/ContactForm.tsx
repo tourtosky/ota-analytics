@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
+import Footer from "@/components/Footer";
 
 export default function ContactForm() {
   const [name, setName] = useState("");
@@ -129,23 +130,7 @@ export default function ContactForm() {
         )}
       </div>
 
-      <footer className="py-12 px-6 border-t border-slate-100">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-base font-bold tracking-tight text-slate-900">
-              peregr<span className="text-cyan-700">io</span>
-            </Link>
-            <span className="text-slate-400 text-sm">Listing intelligence for tour operators</span>
-          </div>
-          <div className="flex gap-8 text-sm text-slate-400">
-            <Link href="/contact" className="hover:text-slate-900 transition-colors">Contact</Link>
-            <Link href="/pricing" className="hover:text-slate-900 transition-colors">Pricing</Link>
-            <Link href="/blog" className="hover:text-slate-900 transition-colors">Blog</Link>
-            <Link href="/privacy" className="hover:text-slate-900 transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-slate-900 transition-colors">Terms</Link>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </main>
   );
 }

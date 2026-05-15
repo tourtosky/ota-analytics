@@ -1,6 +1,7 @@
 import { getAllPosts } from "@/lib/blog";
 import Link from "next/link";
 import type { Metadata } from "next";
+import Footer from "@/components/Footer";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +73,8 @@ export default async function BlogPage() {
           </div>
         )}
       </div>
+
+      <Footer />
     </main>
   );
 }
